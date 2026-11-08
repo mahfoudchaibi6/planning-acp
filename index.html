@@ -54,9 +54,13 @@ table.grille{width:100%;border-collapse:collapse;background:#fff;table-layout:fi
 .fige-on .grille td.frais{cursor:default}
 .fige-on .grille td.frais:hover{outline:none}
 .nbbox{display:grid;grid-template-columns:repeat(3,auto);gap:1px 6px;font-size:11px;font-weight:700;text-align:left;justify-content:center}
-.nbbox span::after{content:"";display:inline-block;width:9px;height:9px;border:1px solid #333;margin-left:2px;vertical-align:-1px}
-.nbbox span.full::after{background:#333}
-.nbbox span.half::after{background:linear-gradient(90deg,#333 50%,#fff 50%)}
+.nbbox span::after{content:"";display:inline-block;width:10px;height:10px;line-height:10px;border:1px solid #333;margin-left:2px;vertical-align:-1px;font-size:9px;text-align:center}
+.nbbox span.full::after{content:"✓"}
+.nbbox span.half::after{content:"½"}
+table.repart{width:100%;border-collapse:collapse}
+.repart th,.repart td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+.repart td.n{font-weight:700;font-size:17px;width:50px}
+.repart .q{font-size:12px;color:var(--muted)}
 td.nb{font-weight:700;cursor:pointer}
 td.nb .man{display:block;font-size:10px;font-weight:400;color:var(--warn)}
 .col-jour{width:13%}.col-frais{width:12%}.col-mw{width:7%}.col-abs{width:12%}.col-tp{width:10%}.col-tlt{width:9%}.col-rcp{width:9%}.col-rep{width:16%}.col-nb{width:5%}.col-scr{width:7%}
@@ -126,7 +130,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
   .grille,.grille tbody,.grille tr,.grille td,.grille thead,.grille thead tr,.grille thead th{display:revert!important}
   .grille td::before{content:none!important}
   .grille tr.ferie td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .grille .gris,.nbbox span::after{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .grille .gris{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .grille td.val .it{display:block!important}
   .grille td.val .it+.it::before{content:none!important}
 }
@@ -181,13 +185,18 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
       </div>
       <div class="card" id="grilleWrap"></div>
       <div class="card noprint">
+        <h3 style="margin:0 0 8px;font-size:16px">À qui répartir</h3>
+        <p class="muted small" style="margin-top:0">Calculé à partir des saisies : absences, temps partiels, RCP et congrès retirent le médecin ; le télétravail ne change rien (réglable dans Paramètres).</p>
+        <div id="repartWrap"></div>
+      </div>
+      <div class="card noprint">
         <label for="notes"><strong>Remarques de la semaine</strong> <span class="muted small">(imprimées sous la grille, ex. « ½ MC = macro ». Ni donnée patient, ni motif d'absence.)</span></label>
         <textarea id="notes" rows="3" maxlength="1000" style="width:100%;margin-top:6px"></textarea>
         <div style="margin-top:6px"><button id="btnNotes">Enregistrer les remarques</button></div>
       </div>
       <div class="legend">
         Cliquez sur une case « Frais médical » pour l'attribuer, sur « Nb répart. » pour corriger le nombre à la main.
-        (mat.) = matin, (ap.-m.) = après-midi. Carré plein = compte 1, demi-carré = 0,5.
+        (mat.) = matin, (ap.-m.) = après-midi. Dans « Nb répart. », ✓ = reçoit des cas, ½ = une demi-journée, case vide = pas de cas.
       </div>
     </section>
 

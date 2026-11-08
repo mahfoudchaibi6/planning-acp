@@ -37,13 +37,14 @@ window.PLANNING_CONFIG = {
   ],
 
   // --- Règle de calcul « Nb répart. » (valeurs par défaut) --------------
-  // Pour chaque statut : true = le médecin NE prend PAS de cas sur ce créneau.
+  // Pour chaque statut : true = le médecin NE prend PAS de cas sur ce créneau
+  // (false = il reçoit quand même des cas, ex. télétravail).
   // Chaque demi-journée de présence compte 0,5. Modifiable aussi dans
   // l'onglet « Paramètres » de l'appli (les réglages y sont partagés).
   regleRepartition: {
     ABS: true,
     TP: true,
-    TLT: true,
+    TLT: false,     // le télétravail n'a pas d'impact sur la répartition
     RCP: true,
     CONGRES: true,
     FRAIS: false,

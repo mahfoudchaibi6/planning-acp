@@ -7,14 +7,14 @@ const DEMO = !CFG.firebase || !CFG.firebase.apiKey || CFG.firebase.apiKey === "A
 
 // ------------------------------------------------------------------ statuts
 const STATUTS = [
-  { id: "ABS", label: "ABS" },
-  { id: "TLT", label: "TLT (télétravail)" },
+  { id: "ABS", label: "ABS (absent)" },
+  { id: "TP", label: "TP (temps partiel)" },
   { id: "RCP", label: "RCP" },
+  { id: "TLT", label: "TLT (télétravail)" },
   { id: "CONGRES", label: "Congrès" },
   { id: "FRAIS", label: "Frais médical" },
   { id: "MW", label: "MW" },
-  { id: "SCREEN", label: "Screen" },
-  { id: "TP", label: "TP (temps partiel)" }
+  { id: "SCREEN", label: "Screen" }
 ];
 const STATUT_LABEL = Object.fromEntries(STATUTS.map(s => [s.id, s.label]));
 // colonnes de la grille Word
@@ -177,9 +177,9 @@ const isFige = () => !!state.week.fige;
 function nbRepart(dateObj) {
   let n = 0; const detail = {};
   for (const m of MEDS) {
-    let v = 0;
-    for (const s of SLOTS) { const st = eff(state.week, dateObj, m, s, state.wid); if (!st || !state.regle[st]) v += 0.5; }
-    detail[m] = v; n += v;
+    const on = SLOTS.map(s => { const st = eff(state.week, dateObj, m, s, state.wid); return !st || !state.regle[st]; });
+    const v = on.filter(Boolean).length * 0.5;
+    detail[m] = v; detail[m + "_slots"] = on; n += v;
   }
   return { n, detail };
 }
@@ -199,6 +199,7 @@ function cellItems(dateObj, statuts) {
 }
 
 // ------------------------------------------------------------------ rendu : grille
+let repartHtml = "";
 function renderGrille() {
   const { year, week } = parseWeekId(state.wid);
   const days = weekDays(state.wid);
@@ -216,13 +217,23 @@ function renderGrille() {
     for (const c of COLS) {
       h += `<td class="val ${c.cls.includes("gris") ? "gris" : ""} ${c.key === "FRAIS" ? "frais" : ""}" data-l="${c.titre.replace("<br>", " ")}" ${c.key === "FRAIS" ? `data-date="${date}"` : ""}>${cellItems(d, c.st)}</td>`;
     }
-    h += `<td data-l="Présents"><div class="nbbox">${MEDS.map(m => `<span class="${detail[m] >= 1 ? "full" : detail[m] > 0 ? "half" : ""}">${esc(m)}</span>`).join("")}</div></td>`;
+    h += `<td data-l="Présents"><div class="nbbox">${MEDS.map(m => `<span class="${detail[m] >= 1 ? "full" : detail[m] > 0 ? "half" : ""}" title="${detail[m] >= 1 ? "reçoit des cas" : detail[m] > 0 ? "reçoit des cas une demi-journée" : "pas de cas"}">${esc(m)}</span>`).join("")}</div></td>`;
     h += `<td class="nb" data-l="Nb répart." data-date="${date}" data-auto="${n}">${fmtNb(man ?? n)}${man != null ? `<span class="man">manuel</span>` : ""}</td>`;
     h += `<td class="val" data-l="Screen">${cellItems(d, ["SCREEN"])}</td></tr>`;
   });
   h += `</tbody></table>`;
+  repartHtml = days.filter(d => !ferieName(d)).map(d => {
+    const { n, detail } = nbRepart(d); const man = state.week.nb?.[iso(d)];
+    const qui = MEDS.filter(m => detail[m] > 0).map(m => {
+      const [a, b] = detail[m + "_slots"]; return a && b ? esc(m) : `${esc(m)} <span class="q">(${a ? "mat." : "ap.-m."})</span>`;
+    });
+    const non = MEDS.filter(m => detail[m] === 0);
+    return `<tr><td><strong>${JOURS[(d.getUTCDay() + 6) % 7]} ${frDate(d)}</strong></td><td class="n">${fmtNb(man ?? n)}</td>
+      <td>${qui.join(", ") || "—"}${non.length ? `<div class="muted small">Pas de cas : ${non.map(esc).join(", ")}</div>` : ""}</td></tr>`;
+  }).join("");
   if (state.week.notes) h += `<div class="notes-print">${esc(state.week.notes)}</div>`;
   $("#grilleWrap").innerHTML = h;
+  $("#repartWrap").innerHTML = repartHtml ? `<table class="repart"><thead><tr><th>Jour</th><th>Nb</th><th>Répartir à</th></tr></thead><tbody>${repartHtml}</tbody></table>` : `<p class="muted">Semaine entièrement fériée.</p>`;
   document.body.classList.toggle("fige-on", isFige());
   $("#figeBanner").classList.toggle("hidden", !isFige());
   $("#btnFiger").textContent = isFige() ? "Défiger la semaine" : "Figer la semaine";
