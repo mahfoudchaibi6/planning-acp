@@ -1,0 +1,53 @@
+rules_version = '2';
+
+// Règles Firestore – Planning médecins ACP
+// ---------------------------------------------------------------
+// ⚠ Ce fichier est PUBLIC : il contient seulement un emplacement.
+// Dans la console Firebase (Firestore > Règles), remplacez
+// REMPLACEZ_PAR_LE_CODE_DU_SERVICE par le vrai code, puis « Publier ».
+// Ne commitez jamais le vrai code dans ce dépôt.
+// ---------------------------------------------------------------
+// Toutes les données sont rangées sous /espaces/{code}/... : sans le
+// bon code, toute lecture et toute écriture sont refusées.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /espaces/{code} {
+      function codeOk() {
+        return code == "REMPLACEZ_PAR_LE_CODE_DU_SERVICE";
+      }
+
+      // Une fiche par semaine ISO, ex. « 2026-W46 »
+      match /semaines/{semaine} {
+        function formatOk() {
+          return request.resource.data.keys().hasOnly(['jours', 'nb', 'notes', 'fige', 'maj'])
+            && request.resource.data.get('notes', '') is string
+            && request.resource.data.get('notes', '').size() <= 1000
+            && request.resource.data.get('fige', false) is bool;
+        }
+
+        allow read: if codeOk();
+        allow create: if codeOk()
+          && semaine.matches('^[0-9]{4}-W[0-9]{2}$')
+          && formatOk();
+        // Semaine figée : seul le champ « fige » (et l'horodatage) peut changer.
+        allow update: if codeOk()
+          && formatOk()
+          && (resource.data.get('fige', false) == false
+              || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fige', 'maj']));
+        allow delete: if false;
+      }
+
+      // Paramètres partagés (règle « Nb répart. »)
+      match /config/params {
+        allow read, write: if codeOk();
+      }
+    }
+
+    // Tout le reste est fermé.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Planning médecins ACP – CH Valenciennes</title>
+<style>
+:root{
+  --bg:#f5f6f8; --surface:#fff; --ink:#1d2330; --muted:#5d6676; --line:#c9ced8;
+  --accent:#1f5f99; --accent-ink:#fff; --grey:#e3e5e9; --warn:#a4470b; --ok:#1d7a46;
+  --ferie:#111; --chip:#eef2f7;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button,select,input,textarea{font:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:7px 12px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:disabled{opacity:.5;cursor:not-allowed}
+select,input,textarea{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
+.hidden{display:none!important}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px}
+header h1{font-size:17px;margin:0 0 8px;font-weight:600}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.weeknav{display:flex;gap:6px;align-items:center}
+.weeknav strong{min-width:150px;text-align:center}
+.weeknav .dates{color:var(--muted);font-size:13px}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
+nav.tabs button{border-radius:6px 6px 0 0;border-bottom:none}
+nav.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+main{padding:16px;max-width:1150px;margin:0 auto}
+.banner{padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:14px}
+.banner.demo{background:#fff4d6;border:1px solid #e7c76a}
+.banner.fige{background:#e8eef7;border:1px solid #9fb6d6}
+.banner.err{background:#fde8e6;border:1px solid #e3a39b}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* ---------- Grille semaine (modèle Word) ---------- */
+table.grille{width:100%;border-collapse:collapse;background:#fff;table-layout:fixed}
+.grille th,.grille td{border:1px solid #333;padding:6px 4px;text-align:center;vertical-align:middle}
+.grille thead .titre th{font-size:20px;font-weight:500;letter-spacing:.5px}
+.grille thead .cols th{font-weight:400;font-size:14px}
+.grille .gris{background:var(--grey)}
+.grille td.jour{font-weight:700;font-style:italic;font-size:15px}
+.grille td.val{font-weight:700;font-size:15px;word-break:break-word}
+.grille td.val .it{display:block}
+.grille td.val .q{font-weight:400;font-size:12px}
+.grille tr.ferie td{background:var(--ferie);color:#fff;font-weight:700;font-size:16px;padding:14px}
+.grille td.frais{cursor:pointer}
+.grille td.frais:hover{outline:2px solid var(--accent);outline-offset:-3px}
+.fige-on .grille td.frais{cursor:default}
+.fige-on .grille td.frais:hover{outline:none}
+.nbbox{display:grid;grid-template-columns:repeat(3,auto);gap:1px 6px;font-size:11px;font-weight:700;text-align:left;justify-content:center}
+.nbbox span::after{content:"";display:inline-block;width:9px;height:9px;border:1px solid #333;margin-left:2px;vertical-align:-1px}
+.nbbox span.full::after{background:#333}
+.nbbox span.half::after{background:linear-gradient(90deg,#333 50%,#fff 50%)}
+td.nb{font-weight:700;cursor:pointer}
+td.nb .man{display:block;font-size:10px;font-weight:400;color:var(--warn)}
+.col-jour{width:13%}.col-frais{width:12%}.col-mw{width:7%}.col-abs{width:12%}.col-tp{width:10%}.col-tlt{width:9%}.col-rcp{width:9%}.col-rep{width:16%}.col-nb{width:5%}.col-scr{width:7%}
+.notes-print{margin-top:6px;text-align:center;font-style:italic;white-space:pre-wrap}
+.legend{margin-top:10px;font-size:13px;color:var(--muted)}
+
+/* ---------- Saisie ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px}
+table.saisie{width:100%;border-collapse:collapse}
+.saisie th,.saisie td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left}
+.saisie select{width:100%}
+.saisie .def{font-size:12px;color:var(--muted)}
+.saisie tr.ferie td{color:var(--muted);background:#f0f0f0}
+table.simple{border-collapse:collapse;width:100%;background:#fff}
+.simple th,.simple td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+.simple th:first-child,.simple td:first-child{text-align:left}
+label.chk{display:flex;gap:8px;align-items:center;padding:4px 0}
+
+/* ---------- Écran du code ---------- */
+#login{max-width:420px;margin:60px auto;padding:0 16px}
+#login .card{padding:22px}
+#login input{width:100%;margin:8px 0 12px}
+
+dialog{border:1px solid var(--line);border-radius:8px;padding:18px;max-width:92vw;width:420px}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog h3{margin-top:0}
+dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex-start;margin-top:14px;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+#toast.on{opacity:.95}
+
+/* ---------- Téléphone : la grille devient une liste de cartes ---------- */
+@media screen and (max-width:720px){
+  main{padding:12px}
+  .grille,.grille tbody,.grille tr,.grille td{display:block;width:100%}
+  .grille thead .cols,.grille colgroup{display:none}
+  .grille thead,.grille thead tr,.grille thead th{display:block;width:100%}
+  .grille tr{margin-bottom:10px;border:1px solid #333;background:#fff}
+  .grille td{border:none;border-bottom:1px solid var(--grey);display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right;padding:6px 10px}
+  .grille td::before{content:attr(data-l);font-weight:400;font-style:normal;color:var(--muted);text-align:left;font-size:13px}
+  .grille td.jour{background:var(--grey);justify-content:center}
+  .grille td.jour::before{content:none}
+  .grille td.val .v{text-align:right}
+  .grille td.val .it{display:inline}
+  .grille td.val .it+.it::before{content:" / "}
+  .grille tr.ferie td{justify-content:center}
+  .grille tr.ferie td::before{content:none}
+  .nbbox{grid-template-columns:repeat(5,auto)}
+  .saisie thead{display:none}
+  .saisie tr{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .saisie td{border:none;padding:2px}
+  .saisie td:first-child{grid-column:1/-1;font-weight:600}
+  .saisie td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--muted)}
+}
+
+/* ---------- Impression ---------- */
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  body{background:#fff;font-size:12px}
+  header,nav,.actions,.banner,.legend,.noprint,#toast{display:none!important}
+  main{padding:0;max-width:none}
+  .card{border:none;padding:0}
+  #app,main,.card,#grilleWrap{width:auto!important;max-width:100%!important}
+  table.grille{width:100%!important;max-width:186mm}
+  .grille th,.grille td{padding:5px 3px}
+  .nbbox{font-size:9px;gap:0 4px}
+  .grille tr{page-break-inside:avoid}
+  .grille,.grille tbody,.grille tr,.grille td,.grille thead,.grille thead tr,.grille thead th{display:revert!important}
+  .grille td::before{content:none!important}
+  .grille tr.ferie td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .grille .gris,.nbbox span::after{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .grille td.val .it{display:block!important}
+  .grille td.val .it+.it::before{content:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- Écran du code du service -->
+<section id="login" class="hidden">
+  <div class="card">
+    <h2 style="margin-top:0;font-size:18px">Planning médecins ACP</h2>
+    <p class="muted small">CH Valenciennes – accès réservé au service.</p>
+    <label for="codeInput">Code du service</label>
+    <input id="codeInput" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false">
+    <label class="chk small"><input type="checkbox" id="codeRemember" checked> Se souvenir sur cet appareil</label>
+    <button class="primary" id="codeBtn" style="width:100%;margin-top:8px">Entrer</button>
+    <p id="codeErr" class="banner err hidden"></p>
+  </div>
+</section>
+
+<!-- Application -->
+<div id="app" class="hidden">
+  <header>
+    <h1>Planning médecins ACP – CH Valenciennes</h1>
+    <div class="bar">
+      <div class="weeknav">
+        <button id="prevW" aria-label="Semaine précédente">◀</button>
+        <div style="text-align:center"><strong id="wLabel"></strong><div class="dates" id="wDates"></div></div>
+        <button id="nextW" aria-label="Semaine suivante">▶</button>
+        <button id="todayW">Cette semaine</button>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="grille" class="on">Grille semaine</button>
+      <button data-tab="saisie">Ma saisie</button>
+      <button data-tab="bilan">Bilan</button>
+      <button data-tab="params">Paramètres</button>
+    </nav>
+  </header>
+
+  <main>
+    <div id="demoBanner" class="banner demo hidden">Mode démo : Firebase n'est pas encore configuré. Les données restent dans ce navigateur.</div>
+    <div id="errBanner" class="banner err hidden"></div>
+
+    <!-- Onglet grille -->
+    <section id="tab-grille">
+      <div id="figeBanner" class="banner fige hidden">Semaine figée : aucune modification possible tant qu'elle n'est pas défigée.</div>
+      <div class="actions">
+        <button class="primary" id="btnProposer">Proposer le frais médical</button>
+        <button id="btnFiger">Figer la semaine</button>
+        <button id="btnPrint">Imprimer</button>
+      </div>
+      <div class="card" id="grilleWrap"></div>
+      <div class="card noprint">
+        <label for="notes"><strong>Remarques de la semaine</strong> <span class="muted small">(imprimées sous la grille, ex. « ½ MC = macro ». Ni donnée patient, ni motif d'absence.)</span></label>
+        <textarea id="notes" rows="3" maxlength="1000" style="width:100%;margin-top:6px"></textarea>
+        <div style="margin-top:6px"><button id="btnNotes">Enregistrer les remarques</button></div>
+      </div>
+      <div class="legend">
+        Cliquez sur une case « Frais médical » pour l'attribuer, sur « Nb répart. » pour corriger le nombre à la main.
+        (mat.) = matin, (ap.-m.) = après-midi. Carré plein = compte 1, demi-carré = 0,5.
+      </div>
+    </section>
+
+    <!-- Onglet saisie -->
+    <section id="tab-saisie" class="hidden">
+      <div class="card">
+        <div class="bar">
+          <label for="meSel"><strong>Je suis :</strong></label>
+          <select id="meSel"></select>
+          <span class="muted small">Choix mémorisé sur cet appareil.</span>
+        </div>
+      </div>
+      <div id="figeBanner2" class="banner fige hidden">Semaine figée.</div>
+      <div class="card" id="saisieWrap"></div>
+      <p class="muted small">Le temps partiel fixe est prérempli. Pour le lever une semaine donnée, choisissez « Présent ».
+        Indiquez seulement le type d'indisponibilité, jamais le motif.</p>
+    </section>
+
+    <!-- Onglet bilan -->
+    <section id="tab-bilan" class="hidden">
+      <div class="card">
+        <div class="bar"><strong>Bilan de l'année</strong> <select id="bilanYear"></select></div>
+        <p class="muted small">Nombre de jours (une demi-journée = 0,5). Sert à équilibrer le frais médical.</p>
+        <div id="bilanWrap"></div>
+      </div>
+    </section>
+
+    <!-- Onglet paramètres -->
+    <section id="tab-params" class="hidden">
+      <div class="card">
+        <h3 style="margin-top:0">Règle « Nb répart. »</h3>
+        <p class="muted small">Cochez les statuts pour lesquels le médecin <strong>ne prend pas de cas</strong> sur le créneau.
+          Chaque demi-journée de présence compte 0,5. Réglage partagé par tout le service.</p>
+        <div id="regleWrap"></div>
+        <button class="primary" id="btnRegle" style="margin-top:8px">Enregistrer la règle</button>
+        <button id="btnRegleDef" style="margin-top:8px">Revenir aux valeurs du fichier de config</button>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Roulement des RCP</h3>
+        <div id="rcpWrap"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Cet appareil</h3>
+        <button id="btnLogout">Oublier le code sur cet appareil</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+<div id="toast"></div>
+
+<script src="config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
