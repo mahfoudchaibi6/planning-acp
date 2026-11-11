@@ -50,8 +50,8 @@ window.PLANNING_CONFIG = {
     ABS: true,
     TP: true,
     CONGRES: true,
-    FORMATION: true, // demi-journée de formation pédagogique
-    ADMIN: true,     // demi-journée administrative
+    FORMATION: false, // la formation pédagogique ne retire pas de la répartition
+    ADMIN: false,     // l'administratif ne retire pas de la répartition
     TLT: false,      // le télétravail ne change pas la répartition
     FRAIS: false     // le médecin du frais reçoit quand même des cas
   },
