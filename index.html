@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Planning médecins ACP – CH Valenciennes</title>
+<title>Planning ACP – CH Valenciennes</title>
 <style>
 :root{
   --bg:#f5f6f8; --surface:#fff; --ink:#1d2330; --muted:#5d6676; --line:#c9ced8;
@@ -67,6 +67,23 @@ td.nb .man{display:block;font-size:10px;font-weight:400;color:var(--warn)}
 .notes-print{margin-top:6px;text-align:center;font-style:italic;white-space:pre-wrap}
 .legend{margin-top:10px;font-size:13px;color:var(--muted)}
 
+.grille tr.introw th{font-weight:400;font-size:14px;padding:6px;cursor:pointer;background:#f7f9fc}
+.encadre{color:var(--accent);font-weight:600;margin:0 0 10px}
+.encadre:empty{display:none}
+/* ---------- Internes ---------- */
+table.tab{width:100%;border-collapse:collapse}
+.tab th,.tab td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:middle}
+.tab th{font-size:13px;color:var(--muted);font-weight:600}
+.tab tr.now td{background:#f0f5fb}
+.tab .wk{font-weight:600;white-space:nowrap}
+.tab .dates{font-size:12px;color:var(--muted);font-weight:400}
+.senior select{min-width:120px;font-weight:700}
+.tag{display:inline-block;font-size:11px;border-radius:10px;padding:1px 8px;margin-left:4px;vertical-align:middle}
+.tag.prop{background:#eceef2;color:var(--muted)}
+.tag.val{background:#e5f3ea;color:var(--ok)}
+.tag.man{background:#e7eef8;color:var(--accent)}
+.alert{display:block;font-size:12px;color:var(--warn);margin-top:3px}
+label.blk{display:block;margin:10px 0 4px;font-weight:600}
 /* ---------- Saisie ---------- */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px}
 table.saisie{width:100%;border-collapse:collapse}
@@ -96,6 +113,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
   main{padding:12px}
   .grille,.grille tbody,.grille tr,.grille td{display:block;width:100%}
   .grille thead .cols,.grille colgroup{display:none}
+  .grille thead tr.introw th{border:1px solid #333;border-top:none}
   .grille thead,.grille thead tr,.grille thead th{display:block;width:100%}
   .grille tr{margin-bottom:10px;border:1px solid #333;background:#fff}
   .grille td{border:none;border-bottom:1px solid var(--grey);display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right;padding:6px 10px}
@@ -108,6 +126,12 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
   .grille tr.ferie td{justify-content:center}
   .grille tr.ferie td::before{content:none}
   .nbbox{grid-template-columns:repeat(5,auto)}
+  .tab thead{display:none}
+  .tab,.tab tbody,.tab tr,.tab td{display:block;width:100%}
+  .tab tr{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff;padding:4px 0}
+  .tab td{border:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px;flex-wrap:wrap}
+  .tab td::before{content:attr(data-l);color:var(--muted);font-size:13px}
+  .tab td.wk::before{content:none}
   .saisie thead{display:none}
   .saisie tr{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
   .saisie td{border:none;padding:2px}
@@ -132,6 +156,8 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
   .grille tr.ferie td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .grille .gris{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .grille td.val .it{display:block!important}
+  .senior select{border:none;appearance:none;-webkit-appearance:none;padding:0;background:none}
+  .tag.prop,.tag.man{display:none}
   .grille td.val .it+.it::before{content:none!important}
 }
 </style>
@@ -154,9 +180,9 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
 <!-- Application -->
 <div id="app" class="hidden">
   <header>
-    <h1>Planning médecins ACP – CH Valenciennes</h1>
+    <h1>Planning ACP – CH Valenciennes</h1>
     <div class="bar">
-      <div class="weeknav">
+      <div class="weeknav" id="weeknav">
         <button id="prevW" aria-label="Semaine précédente">◀</button>
         <div style="text-align:center"><strong id="wLabel"></strong><div class="dates" id="wDates"></div></div>
         <button id="nextW" aria-label="Semaine suivante">▶</button>
@@ -166,6 +192,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
     <nav class="tabs" id="tabs">
       <button data-tab="grille" class="on">Grille semaine</button>
       <button data-tab="saisie">Ma saisie</button>
+      <button data-tab="internes">Internes</button>
       <button data-tab="bilan">Bilan</button>
       <button data-tab="params">Paramètres</button>
     </nav>
@@ -186,7 +213,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
       <div class="card" id="grilleWrap"></div>
       <div class="card noprint">
         <h3 style="margin:0 0 8px;font-size:16px">À qui répartir</h3>
-        <p class="muted small" style="margin-top:0">Calculé à partir des saisies : absences, temps partiels, RCP et congrès retirent le médecin ; le télétravail ne change rien (réglable dans Paramètres).</p>
+        <p class="muted small" style="margin-top:0">Calculé à partir des saisies : absence, temps partiel et congrès retirent le médecin ; RCP, télétravail et frais médical ne changent rien (réglable dans Paramètres).</p>
         <div id="repartWrap"></div>
       </div>
       <div class="card noprint">
@@ -209,10 +236,27 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
           <span class="muted small">Choix mémorisé sur cet appareil.</span>
         </div>
       </div>
+      <div id="saisieInfo" class="encadre"></div>
       <div id="figeBanner2" class="banner fige hidden">Semaine figée.</div>
       <div class="card" id="saisieWrap"></div>
-      <p class="muted small">Le temps partiel fixe est prérempli. Pour le lever une semaine donnée, choisissez « Présent ».
-        Indiquez seulement le type d'indisponibilité, jamais le motif.</p>
+      <p class="muted small">Le temps partiel fixe est prérempli : pour le lever une semaine donnée, choisissez « Présent ».
+        Cochez « RCP » si vous participez à la RCP du lundi soir. Indiquez seulement le type, jamais le motif.</p>
+    </section>
+
+    <!-- Onglet internes -->
+    <section id="tab-internes" class="hidden">
+      <div class="card">
+        <div class="bar noprint" style="margin-bottom:8px">
+          <button id="iPrev" aria-label="Semaines précédentes">◀</button><strong id="iRange"></strong>
+          <button id="iNext" aria-label="Semaines suivantes">▶</button><button id="iToday">Aujourd'hui</button>
+          <button id="btnPrintI">Imprimer</button>
+        </div>
+        <h3 style="margin:4px 0 6px;font-size:16px">Senior de chaque interne</h3>
+        <p class="muted small noprint">Proposé automatiquement à partir des absences saisies : un senior différent pour chaque interne,
+          disponible au moins le nombre de jours fixé dans Paramètres, en équilibrant les semaines de chacun et sans garder le même senior deux semaines de suite.
+          Vous pouvez changer un nom à la main puis « Valider ». Entre parenthèses : jours de présence du senior dans la semaine.</p>
+        <div id="internesWrap"></div>
+      </div>
     </section>
 
     <!-- Onglet bilan -->
@@ -227,15 +271,23 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
     <!-- Onglet paramètres -->
     <section id="tab-params" class="hidden">
       <div class="card">
-        <h3 style="margin-top:0">Règle « Nb répart. »</h3>
-        <p class="muted small">Cochez les statuts pour lesquels le médecin <strong>ne prend pas de cas</strong> sur le créneau.
-          Chaque demi-journée de présence compte 0,5. Réglage partagé par tout le service.</p>
-        <div id="regleWrap"></div>
-        <button class="primary" id="btnRegle" style="margin-top:8px">Enregistrer la règle</button>
-        <button id="btnRegleDef" style="margin-top:8px">Revenir aux valeurs du fichier de config</button>
+        <h3 style="margin-top:0">Équipe</h3>
+        <label class="blk" for="pMeds">Médecins seniors (initiales, séparées par des virgules)</label>
+        <input id="pMeds" style="width:100%">
+        <label class="blk" for="pInternes">Internes (prénoms, séparés par des virgules)</label>
+        <input id="pInternes" style="width:100%">
+        <label class="blk" for="pMin">Présence minimale d'un senior pour encadrer un interne (jours dans la semaine)</label>
+        <input id="pMin" inputmode="decimal" style="width:80px">
       </div>
       <div class="card">
-        <h3 style="margin-top:0">Roulement des RCP</h3>
+        <h3 style="margin-top:0">Règle « Nb répart. »</h3>
+        <p class="muted small">Cochez les situations où le médecin <strong>ne reçoit pas de cas</strong> sur le créneau.
+          Chaque demi-journée compte 0,5. La RCP du lundi soir ne retire jamais. Réglage partagé par tout le service.</p>
+        <div id="regleWrap"></div>
+      </div>
+      <div class="actions"><button class="primary" id="btnParams">Enregistrer les paramètres</button></div>
+      <div class="card">
+        <h3 style="margin-top:0">RCP du lundi soir</h3>
         <div id="rcpWrap"></div>
       </div>
       <div class="card">

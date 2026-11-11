@@ -1,4 +1,4 @@
-# Planning médecins ACP – CH Valenciennes
+# Planning ACP – CH Valenciennes (médecins, frais médical, internes)
 
 Page web unique (HTML/JS) hébergée sur GitHub Pages, données dans Firebase Firestore (région Europe).
 
@@ -6,7 +6,14 @@ Page web unique (HTML/JS) hébergée sur GitHub Pages, données dans Firebase Fi
 - **config.js** : liste des médecins, temps partiels fixes, règle « Nb répart. », roulement RCP, connexion Firebase.
 - **firestore.rules** : règles de sécurité (modèle : le vrai code se met **uniquement dans la console Firebase**).
 
-Pas de donnée patient, pas de motif d'absence : on saisit seulement un type (ABS, TLT, RCP, Congrès, Frais médical, MW, Screen, TP).
+Un seul logiciel :
+- chaque médecin saisit ses absences (ABS, TP, Congrès, TLT, Frais médical, Screen) et coche la RCP du lundi soir ;
+- grille semaine sur le modèle Word, avec « Nb répart. » et la liste des médecins qui reçoivent des cas ;
+- frais médical proposé automatiquement de façon équilibrée ;
+- chaque semaine, un senior différent pour chaque interne (Florestan, Emma), choisi parmi les médecins présents ;
+- colonne MW (dermatopathologiste, présente le lundi, hors répartition).
+
+Pas de donnée patient, pas de motif d'absence.
 
 ## Fonctionnement de la sécurité
 

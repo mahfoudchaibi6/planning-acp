@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Règles Firestore – Planning médecins ACP
+// Règles Firestore – Planning ACP (médecins, frais, internes)
 // ---------------------------------------------------------------
 // ⚠ Ce fichier est PUBLIC : il contient seulement un emplacement.
 // Dans la console Firebase (Firestore > Règles), remplacez
@@ -21,7 +21,7 @@ service cloud.firestore {
       // Une fiche par semaine ISO, ex. « 2026-W46 »
       match /semaines/{semaine} {
         function formatOk() {
-          return request.resource.data.keys().hasOnly(['jours', 'nb', 'notes', 'fige', 'maj'])
+          return request.resource.data.keys().hasOnly(['jours', 'nb', 'notes', 'fige', 'internes', 'maj'])
             && request.resource.data.get('notes', '') is string
             && request.resource.data.get('notes', '').size() <= 1000
             && request.resource.data.get('fige', false) is bool;
@@ -39,8 +39,8 @@ service cloud.firestore {
         allow delete: if false;
       }
 
-      // Paramètres partagés (règle « Nb répart. »)
-      match /config/params {
+      // Paramètres partagés (équipe, règle « Nb répart. »)
+      match /config/{param} {
         allow read, write: if codeOk();
       }
     }
