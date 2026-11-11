@@ -7,10 +7,10 @@ Page web unique (HTML/JS) hébergée sur GitHub Pages, données dans Firebase Fi
 - **firestore.rules** : règles de sécurité (modèle : le vrai code se met **uniquement dans la console Firebase**).
 
 Un seul logiciel :
-- chaque médecin saisit ses absences (ABS, TP, Congrès, TLT, Frais médical, Screen) et coche la RCP du lundi soir ;
+- chaque médecin saisit ses absences (ABS, TP, Congrès, Formation pédagogique, Administratif, TLT, Frais médical) et coche la RCP du lundi soir ;
 - grille semaine sur le modèle Word, avec « Nb répart. » et la liste des médecins qui reçoivent des cas ;
 - frais médical proposé automatiquement de façon équilibrée ;
-- chaque semaine, un senior différent pour chaque interne (Florestan, Emma), choisi parmi les médecins présents ;
+- chaque semaine, un senior différent pour chaque interne (Florestan, Emma), présent toute la semaine (le temps partiel ne compte pas comme absence) ;
 - colonne MW (dermatopathologiste, présente le lundi, hors répartition).
 
 Pas de donnée patient, pas de motif d'absence.

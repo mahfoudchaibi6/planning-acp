@@ -63,7 +63,7 @@ table.repart{width:100%;border-collapse:collapse}
 .repart .q{font-size:12px;color:var(--muted)}
 td.nb{font-weight:700;cursor:pointer}
 td.nb .man{display:block;font-size:10px;font-weight:400;color:var(--warn)}
-.col-jour{width:13%}.col-frais{width:12%}.col-mw{width:7%}.col-abs{width:12%}.col-tp{width:10%}.col-tlt{width:9%}.col-rcp{width:9%}.col-rep{width:16%}.col-nb{width:5%}.col-scr{width:7%}
+.col-jour{width:13%}.col-frais{width:12%}.col-mw{width:8%}.col-abs{width:15%}.col-tp{width:11%}.col-tlt{width:9%}.col-rcp{width:9%}.col-rep{width:17%}.col-nb{width:6%}
 .notes-print{margin-top:6px;text-align:center;font-style:italic;white-space:pre-wrap}
 .legend{margin-top:10px;font-size:13px;color:var(--muted)}
 
@@ -213,7 +213,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
       <div class="card" id="grilleWrap"></div>
       <div class="card noprint">
         <h3 style="margin:0 0 8px;font-size:16px">À qui répartir</h3>
-        <p class="muted small" style="margin-top:0">Calculé à partir des saisies : absence, temps partiel et congrès retirent le médecin ; RCP, télétravail et frais médical ne changent rien (réglable dans Paramètres).</p>
+        <p class="muted small" style="margin-top:0">Calculé à partir des saisies : absence, temps partiel, congrès, formation et administratif retirent le médecin sur la demi-journée ; RCP, télétravail et frais médical ne changent rien (réglable dans Paramètres).</p>
         <div id="repartWrap"></div>
       </div>
       <div class="card noprint">
@@ -253,8 +253,8 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
         </div>
         <h3 style="margin:4px 0 6px;font-size:16px">Senior de chaque interne</h3>
         <p class="muted small noprint">Proposé automatiquement à partir des absences saisies : un senior différent pour chaque interne,
-          disponible au moins le nombre de jours fixé dans Paramètres, en équilibrant les semaines de chacun et sans garder le même senior deux semaines de suite.
-          Vous pouvez changer un nom à la main puis « Valider ». Entre parenthèses : jours de présence du senior dans la semaine.</p>
+          présent toute la semaine (le temps partiel, la formation et l'administratif ne comptent pas comme absence), en équilibrant les semaines de chacun et sans garder le même senior deux semaines de suite.
+          Vous pouvez changer un nom à la main puis « Valider ». Entre parenthèses : jours de présence du senior (hors absences et congrès).</p>
         <div id="internesWrap"></div>
       </div>
     </section>
@@ -276,7 +276,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
         <input id="pMeds" style="width:100%">
         <label class="blk" for="pInternes">Internes (prénoms, séparés par des virgules)</label>
         <input id="pInternes" style="width:100%">
-        <label class="blk" for="pMin">Présence minimale d'un senior pour encadrer un interne (jours dans la semaine)</label>
+        <label class="blk" for="pMin">Présence minimale d'un senior pour encadrer un interne (jours dans la semaine ; 5 = toute la semaine — le temps partiel ne compte pas comme absence)</label>
         <input id="pMin" inputmode="decimal" style="width:80px">
       </div>
       <div class="card">

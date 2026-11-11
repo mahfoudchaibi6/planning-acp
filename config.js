@@ -21,7 +21,7 @@ window.PLANNING_CONFIG = {
   },
 
   // --- Pathologistes seniors (initiales) --------------------------------
-  medecins: ["MC", "DD", "PV", "LL", "KL", "SB", "JP", "MPE", "CC", "EFL"],
+  medecins: ["MC", "DD", "PV", "LLA", "KL", "SB", "JP", "MPE", "CC"],
 
   // --- Dermatopathologiste (hors répartition générale) -------------------
   // Présente seulement les jours indiqués (1 = lundi). Colonne « MW ».
@@ -29,17 +29,19 @@ window.PLANNING_CONFIG = {
 
   // --- Internes -----------------------------------------------------------
   internes: ["Florestan", "Emma"],
-  // Un senior n'encadre un interne que s'il est disponible au moins ce
-  // nombre de jours dans la semaine (hors jours fériés).
-  joursMinimumEncadrement: 3,
+  // Un senior n'encadre un interne que s'il est présent au moins ce nombre de
+  // jours dans la semaine (hors fériés). 5 = toute la semaine.
+  // Le temps partiel, la formation et l'administratif n'empêchent pas d'encadrer ;
+  // seuls l'absence (ABS) et le congrès comptent.
+  joursMinimumEncadrement: 5,
 
   // --- Temps partiels fixes, préremplis chaque semaine -----------------
   // jour : 1 = lundi … 5 = vendredi ; creneau : "J" (journée), "M" (matin), "AM" (après-midi)
+  // (MPE et PV ont un jour variable : elles le saisissent chaque semaine.)
   tempsPartiels: [
     { medecin: "KL", jour: 3, creneau: "J" },
     { medecin: "DD", jour: 3, creneau: "J" },
-    { medecin: "SB", jour: 5, creneau: "J" },
-    { medecin: "PV", jour: 4, creneau: "AM" }
+    { medecin: "SB", jour: 5, creneau: "J" }
   ],
 
   // --- Règle « Nb répart. » (valeurs de départ) --------------------------
@@ -48,9 +50,10 @@ window.PLANNING_CONFIG = {
     ABS: true,
     TP: true,
     CONGRES: true,
-    TLT: false,     // le télétravail ne change pas la répartition
-    FRAIS: false,   // le médecin du frais reçoit quand même des cas
-    SCREEN: false
+    FORMATION: true, // demi-journée de formation pédagogique
+    ADMIN: true,     // demi-journée administrative
+    TLT: false,      // le télétravail ne change pas la répartition
+    FRAIS: false     // le médecin du frais reçoit quand même des cas
   },
 
   // --- RCP du lundi soir --------------------------------------------------

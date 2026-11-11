@@ -10,12 +10,13 @@ const STATUTS = [
   { id: "ABS", label: "ABS (absent)" },
   { id: "TP", label: "TP (temps partiel)" },
   { id: "CONGRES", label: "Congrès" },
+  { id: "FORMATION", label: "Formation pédagogique" },
+  { id: "ADMIN", label: "Administratif" },
   { id: "TLT", label: "TLT (télétravail)" },
-  { id: "FRAIS", label: "Frais médical" },
-  { id: "SCREEN", label: "Screen" }
+  { id: "FRAIS", label: "Frais médical" }
 ];
 const STATUT_LABEL = Object.fromEntries(STATUTS.map(s => [s.id, s.label]));
-const ABSENT = ["ABS", "TP", "CONGRES"];      // rendent indisponible pour encadrer un interne
+const ABSENT = ["ABS", "CONGRES"];            // rendent indisponible pour encadrer un interne (pas le TP)
 const SLOTS = ["M", "AM"];
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 const JC = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
@@ -133,7 +134,7 @@ function rcp(id, d, med) {
   const s = W(id).jours?.[iso(d)]?.[med]?.RCP;
   return s === undefined || s === null ? rcpDefault(id, med) : !!s;
 }
-const dermaPresente = (id, d) => DERMA && DERMA.jours.includes(dow(d)) && SLOTS.some(s => !ABSENT.includes(eff(W(id), d, DERMA.nom, s)));
+const dermaPresente = (id, d) => DERMA && DERMA.jours.includes(dow(d)) && SLOTS.some(s => !["ABS", "CONGRES", "TP"].includes(eff(W(id), d, DERMA.nom, s)));
 
 // ------------------------------------------------------------------ répartition des cas
 function nbRepart(id, d) {
@@ -190,7 +191,8 @@ function cellItems(d, statuts) {
     if (!hit[0] && !hit[1]) continue;
     const q = [];
     if (hit[0] && !hit[1]) q.push("mat."); if (!hit[0] && hit[1]) q.push("ap.-m.");
-    if (statuts.includes("CONGRES") && st.includes("CONGRES")) q.push("congrès");
+    const suf = { CONGRES: "congrès", FORMATION: "formation", ADMIN: "admin." };
+    for (const k of Object.keys(suf)) if (statuts.includes(k) && st.includes(k)) q.push(suf[k]);
     items.push(`<span class="it">${esc(m)}${q.length ? ` <span class="q">(${q.join(", ")})</span>` : ""}</span>`);
   }
   return `<span class="v">${items.join("")}</span>`;
@@ -199,26 +201,25 @@ function renderGrille() {
   const id = state.wid; const { year, week } = parseWeekId(id); const days = weekDays(id); const wk = W(id);
   const ints = internesDe(id);
   const intTxt = state.internes.map(i => { const a = ints[i]; return `${esc(i)} : <strong>${a?.med ? esc(a.med) : "—"}</strong>${a?.src === "prop" ? ` <span class="q noprint">(proposé)</span>` : ""}`; }).join(" &nbsp;·&nbsp; ");
-  let h = `<table class="grille"><colgroup><col class="col-jour"><col class="col-frais"><col class="col-mw"><col class="col-abs"><col class="col-tp"><col class="col-tlt"><col class="col-rcp"><col class="col-rep"><col class="col-nb"><col class="col-scr"></colgroup><thead>
-    <tr class="titre"><th colspan="10">SEMAINE ${pad(week)}/${year}</th></tr>
-    ${state.internes.length ? `<tr class="introw"><th colspan="10">Seniors des internes — ${intTxt}</th></tr>` : ""}
-    <tr class="cols"><th></th><th>Frais<br>médical</th><th>MW</th><th class="gris">ABS</th><th class="gris">TP</th><th>TLT</th><th>RCP</th><th colspan="2">Nb répart.</th><th>Screen</th></tr></thead><tbody>`;
+  let h = `<table class="grille"><colgroup><col class="col-jour"><col class="col-frais"><col class="col-mw"><col class="col-abs"><col class="col-tp"><col class="col-tlt"><col class="col-rcp"><col class="col-rep"><col class="col-nb"></colgroup><thead>
+    <tr class="titre"><th colspan="9">SEMAINE ${pad(week)}/${year}</th></tr>
+    ${state.internes.length ? `<tr class="introw"><th colspan="9">Seniors des internes — ${intTxt}</th></tr>` : ""}
+    <tr class="cols"><th></th><th>Frais<br>médical</th><th>MW</th><th class="gris">ABS</th><th class="gris">TP</th><th>TLT</th><th>RCP</th><th colspan="2">Nb répart.</th></tr></thead><tbody>`;
   days.forEach((d, i) => {
     const date = iso(d); const fer = ferie(d);
-    if (fer) { h += `<tr class="ferie"><td colspan="10">${JOURS[i].toUpperCase()} ${frDate(d)} – FÉRIÉ (${esc(fer)})</td></tr>`; return; }
+    if (fer) { h += `<tr class="ferie"><td colspan="9">${JOURS[i].toUpperCase()} ${frDate(d)} – FÉRIÉ (${esc(fer)})</td></tr>`; return; }
     const { n, detail } = nbRepart(id, d); const man = wk.nb?.[date];
     const mw = DERMA && DERMA.jours.includes(dow(d)) ? (dermaPresente(id, d) ? esc(DERMA.nom) : `<span class="q">${esc(DERMA.nom)} absente</span>`) : "";
     const rc = state.meds.filter(m => rcp(id, d, m)).map(m => `<span class="it">${esc(m)}</span>`).join("");
     h += `<tr><td class="jour">${JOURS[i].toUpperCase()}<br>${frDate(d)}</td>
       <td class="val frais" data-l="Frais médical" data-date="${date}">${cellItems(d, ["FRAIS"])}</td>
       <td class="val" data-l="MW">${mw}</td>
-      <td class="val gris" data-l="ABS">${cellItems(d, ["ABS", "CONGRES"])}</td>
+      <td class="val gris" data-l="ABS">${cellItems(d, ["ABS", "CONGRES", "FORMATION", "ADMIN"])}</td>
       <td class="val gris" data-l="TP">${cellItems(d, ["TP"])}</td>
       <td class="val" data-l="TLT">${cellItems(d, ["TLT"])}</td>
       <td class="val" data-l="RCP"><span class="v">${rc}</span></td>
       <td data-l="Répartir à"><div class="nbbox">${state.meds.map(m => { const [a, b] = detail[m]; return `<span class="${a && b ? "full" : a || b ? "half" : ""}">${esc(m)}</span>`; }).join("")}</div></td>
-      <td class="nb" data-l="Nb répart." data-date="${date}" data-auto="${n}">${fmtNb(man ?? n)}${man != null ? `<span class="man">manuel</span>` : ""}</td>
-      <td class="val" data-l="Screen">${cellItems(d, ["SCREEN"])}</td></tr>`;
+      <td class="nb" data-l="Nb répart." data-date="${date}" data-auto="${n}">${fmtNb(man ?? n)}${man != null ? `<span class="man">manuel</span>` : ""}</td></tr>`;
   });
   h += `</tbody></table>`;
   if (wk.notes) h += `<div class="notes-print">${esc(wk.notes)}</div>`;
@@ -358,8 +359,8 @@ function renderInternes() {
       const opts = [`<option value="">—</option>`].concat(state.meds.map(m => { const d = dispoSenior(id, m); return `<option value="${esc(m)}" ${m === a.med ? "selected" : ""}>${esc(m)} (${fmtNb(d.n)}/${d.total} j)</option>`; })).join("");
       const tag = { val: `<span class="tag val">validé</span>`, man: `<span class="tag man">choisi</span>`, prop: `<span class="tag prop">proposé</span>`, none: "" }[a.src];
       let alert = "";
-      if (a.src === "none" && id >= today) alert = `<span class="alert">Aucun senior assez disponible</span>`;
-      else if (a.med) { const d = dispoSenior(id, a.med); if (d.n < Math.min(state.min, d.total)) alert = `<span class="alert">⚠ ${esc(a.med)} n'est disponible que ${fmtNb(d.n)} j</span>`; }
+      if (a.src === "none" && id >= today) alert = `<span class="alert">Aucun senior présent toute la semaine : choisissez à la main</span>`;
+      else if (a.med) { const d = dispoSenior(id, a.med); if (d.n < Math.min(state.min, d.total)) alert = `<span class="alert">⚠ ${esc(a.med)} est absent(e) une partie de la semaine (${fmtNb(d.n)}/${d.total} j)</span>`; }
       h += `<td class="senior" data-l="${esc(i)}"><span><select data-id="${id}" data-int="${esc(i)}" ${f ? "disabled" : ""}>${opts}</select>${tag}</span>${alert}</td>`;
     }
     h += `<td class="noprint" data-l="">${f ? `<span class="muted small">semaine figée</span>` : w.internes?.valide
@@ -375,16 +376,16 @@ function renderBilan() {
   const ys = [...new Set([...Object.keys(state.all), todayWeekId()].map(k => k.slice(0, 4)))].sort();
   const sel = $("#bilanYear"); const y = ys.includes(sel.value) ? sel.value : todayWeekId().slice(0, 4);
   sel.innerHTML = ys.map(v => `<option ${v === y ? "selected" : ""}>${v}</option>`).join("");
-  const t = Object.fromEntries(state.meds.map(m => [m, { FRAIS: 0, SCREEN: 0, RCP: 0, int: Object.fromEntries(state.internes.map(i => [i, 0])) }]));
+  const t = Object.fromEntries(state.meds.map(m => [m, { FRAIS: 0, RCP: 0, int: Object.fromEntries(state.internes.map(i => [i, 0])) }]));
   for (const [id, w] of Object.entries(state.all)) if (id.startsWith(y)) for (const d of weekDays(id)) {
     if (ferie(d)) continue;
-    for (const m of state.meds) { for (const s of SLOTS) { const st = eff(w, d, m, s); if (st === "FRAIS" || st === "SCREEN") t[m][st] += 0.5; } if (rcp(id, d, m)) t[m].RCP++; }
+    for (const m of state.meds) { for (const s of SLOTS) { const st = eff(w, d, m, s); if (st === "FRAIS") t[m].FRAIS += 0.5; } if (rcp(id, d, m)) t[m].RCP++; }
   }
   const cur = todayWeekId(); const last = y < cur.slice(0, 4) ? `${y}-W53` : cur;
   const res = computeInternes([last, shiftWeek(state.istart, (CFG.semainesInternesAffichees || 8) - 1)].sort().pop());
   for (const [id, r] of Object.entries(res)) if (id.startsWith(y) && id <= last) for (const i of state.internes) { const m = r[i]?.med; if (m && t[m]) t[m].int[i]++; }
-  $("#bilanWrap").innerHTML = `<table class="simple"><thead><tr><th>Médecin</th><th>Frais médical (j)</th><th>Screen (j)</th><th>RCP</th>${state.internes.map(i => `<th>Sem. avec ${esc(i)}</th>`).join("")}</tr></thead><tbody>` +
-    state.meds.map(m => `<tr><td>${esc(m)}</td><td>${fmtNb(t[m].FRAIS)}</td><td>${fmtNb(t[m].SCREEN)}</td><td>${t[m].RCP}</td>${state.internes.map(i => `<td>${t[m].int[i]}</td>`).join("")}</tr>`).join("") + `</tbody></table>`;
+  $("#bilanWrap").innerHTML = `<table class="simple"><thead><tr><th>Médecin</th><th>Frais médical (j)</th><th>RCP</th>${state.internes.map(i => `<th>Sem. avec ${esc(i)}</th>`).join("")}</tr></thead><tbody>` +
+    state.meds.map(m => `<tr><td>${esc(m)}</td><td>${fmtNb(t[m].FRAIS)}</td><td>${t[m].RCP}</td>${state.internes.map(i => `<td>${t[m].int[i]}</td>`).join("")}</tr>`).join("") + `</tbody></table>`;
 }
 
 // ------------------------------------------------------------------ paramètres
@@ -461,7 +462,7 @@ function bind() {
   $("#btnParams").onclick = async () => {
     const split = s => [...new Set(s.split(/[,;]/).map(x => x.trim()).filter(Boolean))];
     const medecins = split($("#pMeds").value), internes = split($("#pInternes").value);
-    const joursMin = Math.max(0.5, Math.min(5, Number(String($("#pMin").value).replace(",", ".")) || 3));
+    const joursMin = Math.max(0.5, Math.min(5, Number(String($("#pMin").value).replace(",", ".")) || 5));
     const regle = {}; document.querySelectorAll("#regleWrap input").forEach(i => (regle[i.dataset.st] = i.checked));
     if (medecins.length < 2) { toast("Il faut au moins 2 médecins"); return; }
     if (internes.length > medecins.length) { toast("Plus d'internes que de médecins"); return; }
