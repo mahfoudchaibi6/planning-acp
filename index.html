@@ -484,6 +484,18 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
         <div id="rcpWrap"></div>
       </div>
       <div class="card">
+        <h3>Changer le code du service</h3>
+        <p class="lead">Le planning est rangé sous le code actuel : on le recopie sous le nouveau code, sans rien perdre.</p>
+        <ol class="small" style="padding-left:18px;line-height:1.6;margin:0 0 12px">
+          <li>Dans <strong>Firebase → Firestore → Règles</strong>, remplacez la ligne du code par<br>
+            <code>return code == "ANCIEN_CODE" || code == "NOUVEAU_CODE";</code> puis « Publier ».</li>
+          <li>Ici, tapez le nouveau code et cliquez sur « Recopier le planning ».</li>
+          <li>Dans les règles, ne gardez plus que <code>return code == "NOUVEAU_CODE";</code> puis « Publier ».</li>
+        </ol>
+        <div class="bar"><input id="newCode" type="password" placeholder="Nouveau code (16 caractères min.)" autocomplete="new-password" style="flex:1;min-width:220px">
+          <button class="primary" id="btnCopyCode">Recopier le planning</button></div>
+      </div>
+      <div class="card">
         <h3>Cet appareil</h3>
         <p class="lead">Pour un ordinateur partagé, effacez le code après usage.</p>
         <button id="btnLogout">Oublier le code sur cet appareil</button>

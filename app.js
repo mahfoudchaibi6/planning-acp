@@ -78,7 +78,19 @@ async function makeFirestoreStore(code) {
     subscribe(cb, onErr) { return fs.onSnapshot(col, s => { const o = {}; s.forEach(d => (o[d.id] = d.data())); cb(o); }, onErr); },
     patch: (id, p) => fs.setDoc(fs.doc(col, id), { ...conv(p), maj: fs.serverTimestamp() }, { merge: true }),
     async getParams() { const s = await fs.getDoc(pref); return s.exists() ? s.data() : {}; },
-    setParams: p => fs.setDoc(pref, p)
+    setParams: p => fs.setDoc(pref, p),
+    // Recopie tout le planning sous un nouveau code (les règles doivent autoriser les deux codes).
+    async copyTo(newCode) {
+      const src = await fs.getDocs(col); const params = await fs.getDoc(pref);
+      const docs = []; src.forEach(d => docs.push(d));
+      for (let i = 0; i < docs.length; i += 400) {
+        const b = fs.writeBatch(db);
+        for (const d of docs.slice(i, i + 400)) b.set(fs.doc(db, "espaces", newCode, "semaines", d.id), { ...d.data(), maj: fs.serverTimestamp() });
+        await b.commit();
+      }
+      if (params.exists()) await fs.setDoc(fs.doc(db, "espaces", newCode, "config", "params"), params.data());
+      return docs.length;
+    }
   };
 }
 function makeDemoStore() {
@@ -92,7 +104,8 @@ function makeDemoStore() {
     subscribe(cb) { listener = cb; cb(structuredClone(load().semaines)); return () => (listener = null); },
     async patch(id, p) { const d = load(); merge((d.semaines[id] ??= {}), p); save(d); listener && listener(structuredClone(d.semaines)); },
     async getParams() { return load().params || {}; },
-    async setParams(p) { const d = load(); d.params = p; save(d); }
+    async setParams(p) { const d = load(); d.params = p; save(d); },
+    async copyTo() { return Object.keys(load().semaines).length; }
   };
 }
 
@@ -533,6 +546,21 @@ function bind() {
     if (internes.length > medecins.length) { toast("Plus d'internes que de médecins"); return; }
     try { await store.setParams({ medecins, internes, joursMin, regle }); Object.assign(state, { meds: medecins, internes, min: joursMin, regle }); cacheInt = null; toast("Paramètres enregistrés"); }
     catch (e) { showErr(e); }
+  };
+  $("#btnCopyCode").onclick = async () => {
+    const nc = $("#newCode").value.trim();
+    if (!/^[A-Za-z0-9_-]{16,64}$/.test(nc)) { toast("Nouveau code : 16 caractères minimum (lettres, chiffres, - ou _)"); return; }
+    if (!confirm("Recopier tout le planning sous le nouveau code ?")) return;
+    try {
+      const n = await store.copyTo(nc);
+      try { (localStorage.getItem("planningACP_code") ? localStorage : sessionStorage).setItem("planningACP_code", nc); } catch {}
+      $("#newCode").value = "";
+      dialog(`<h3>✅ Planning recopié</h3><p>${n} semaine(s) recopiée(s) sous le nouveau code. Cet appareil utilise désormais le nouveau code.</p>
+        <p><strong>Dernière étape :</strong> dans Firebase (Firestore → Règles), retirez l'ancien code pour ne garder que le nouveau, puis « Publier ». Donnez ensuite le nouveau code aux collègues : ils devront le taper une fois.</p>`, () => location.reload(), "Recharger");
+    } catch (e) {
+      if (e?.code === "permission-denied") toast("Refusé : ajoutez d'abord le nouveau code dans les règles Firebase (étape 1)");
+      else showErr(e);
+    }
   };
   $("#btnLogout").onclick = () => { try { localStorage.removeItem("planningACP_code"); sessionStorage.removeItem("planningACP_code"); } catch {} location.reload(); };
   $("#codeBtn").onclick = tryCode;
