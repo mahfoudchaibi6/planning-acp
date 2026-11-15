@@ -2,163 +2,332 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b6e80">
 <title>Planning ACP – CH Valenciennes</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b6e80'/%3E%3Cpath d='M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f5f6f8; --surface:#fff; --ink:#1d2330; --muted:#5d6676; --line:#c9ced8;
-  --accent:#1f5f99; --accent-ink:#fff; --grey:#e3e5e9; --warn:#a4470b; --ok:#1d7a46;
-  --ferie:#111; --chip:#eef2f7;
+  --bg:#eef4f6; --surface:#ffffff; --surface-2:#f6fafb; --ink:#0f2a37; --muted:#5b7180; --line:#d9e5ea; --line-2:#e9f0f3;
+  --primary:#0b6e80; --primary-2:#0e8aa0; --primary-soft:#e0f2f5; --accent:#14b8a6;
+  --ok:#0f7a5c; --ok-soft:#dcf4ea; --warn:#b45309; --warn-soft:#fff3dc; --danger:#b42318; --danger-soft:#fde4e2;
+  --radius:14px; --radius-sm:9px;
+  --shadow:0 1px 2px rgba(15,42,55,.06),0 4px 16px rgba(15,42,55,.06);
+  /* couleurs des statuts */
+  --ABS-bg:#fde4e2; --ABS-fg:#b42318;
+  --TP-bg:#e7ecf2; --TP-fg:#44546a;
+  --CONGRES-bg:#efe6fd; --CONGRES-fg:#6b3fb3;
+  --FORMATION-bg:#fff0d4; --FORMATION-fg:#9a5600;
+  --ADMIN-bg:#e3edf4; --ADMIN-fg:#2f5872;
+  --TLT-bg:#dcebff; --TLT-fg:#1d5fb4;
+  --FRAIS-bg:#d6f3ec; --FRAIS-fg:#0b7461;
+  --RCP-bg:#fde6f2; --RCP-fg:#a3236d;
+  --MW-bg:#f5ead9; --MW-fg:#86561c;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-button,select,input,textarea{font:inherit}
-button{cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:7px 12px}
-button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-button:disabled{opacity:.5;cursor:not-allowed}
-select,input,textarea{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font-weight:500;transition:background .15s,border-color .15s,box-shadow .15s}
+button:hover{border-color:#b9cdd6;background:var(--surface-2)}
+button.primary{background:linear-gradient(180deg,var(--primary-2),var(--primary));border-color:var(--primary);color:#fff;box-shadow:0 2px 6px rgba(11,110,128,.25)}
+button.primary:hover{filter:brightness(1.05)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button .ic,.tabs .ic{width:17px;height:17px;vertical-align:-3px;margin-right:6px}
+select,input,textarea{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+select:focus,input:focus,textarea:focus,button:focus-visible{outline:none;border-color:var(--primary-2);box-shadow:0 0 0 3px rgba(14,138,160,.18)}
 .hidden{display:none!important}
-header{background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px}
-header h1{font-size:17px;margin:0 0 8px;font-weight:600}
-.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.weeknav{display:flex;gap:6px;align-items:center}
-.weeknav strong{min-width:150px;text-align:center}
-.weeknav .dates{color:var(--muted);font-size:13px}
-nav.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
-nav.tabs button{border-radius:6px 6px 0 0;border-bottom:none}
-nav.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-main{padding:16px;max-width:1150px;margin:0 auto}
-.banner{padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:14px}
-.banner.demo{background:#fff4d6;border:1px solid #e7c76a}
-.banner.fige{background:#e8eef7;border:1px solid #9fb6d6}
-.banner.err{background:#fde8e6;border:1px solid #e3a39b}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
-.muted{color:var(--muted)}
-.small{font-size:13px}
+.muted{color:var(--muted)} .small{font-size:13px}
+h2,h3{letter-spacing:-.01em}
 
-/* ---------- Grille semaine (modèle Word) ---------- */
-table.grille{width:100%;border-collapse:collapse;background:#fff;table-layout:fixed}
-.grille th,.grille td{border:1px solid #333;padding:6px 4px;text-align:center;vertical-align:middle}
-.grille thead .titre th{font-size:20px;font-weight:500;letter-spacing:.5px}
-.grille thead .cols th{font-weight:400;font-size:14px}
-.grille .gris{background:var(--grey)}
-.grille td.jour{font-weight:700;font-style:italic;font-size:15px}
-.grille td.val{font-weight:700;font-size:15px;word-break:break-word}
-.grille td.val .it{display:block}
-.grille td.val .q{font-weight:400;font-size:12px}
-.grille tr.ferie td{background:var(--ferie);color:#fff;font-weight:700;font-size:16px;padding:14px}
-.grille td.frais{cursor:pointer}
-.grille td.frais:hover{outline:2px solid var(--accent);outline-offset:-3px}
+/* ---------- En-tête ---------- */
+header.top{background:linear-gradient(120deg,#0a5d6d 0%,#0b6e80 45%,#1287a3 100%);color:#fff;padding:16px 20px 18px;position:relative;overflow:hidden}
+header.top::after{content:"";position:absolute;right:-60px;top:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.16);display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.25)}
+.logo svg{width:24px;height:24px}
+.brand h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.01em}
+.brand .sub{font-size:12.5px;opacity:.85}
+.headrow{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;max-width:1180px;margin:0 auto}
+.weeknav{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:5px;border-radius:14px;position:relative;z-index:1}
+.weeknav button{background:transparent;border:none;color:#fff;padding:7px 10px;border-radius:9px}
+.weeknav button:hover{background:rgba(255,255,255,.18)}
+.weeknav .wk{min-width:170px;text-align:center;line-height:1.2}
+.weeknav .wk strong{display:block;font-size:15px}
+.weeknav .wk span{font-size:12px;opacity:.85}
+.weeknav #todayW{background:#fff;color:var(--primary);font-weight:600}
+
+/* ---------- Onglets ---------- */
+nav.tabs{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;gap:2px;padding:0 12px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+.tabs-in{display:flex;gap:2px;max-width:1180px;margin:0 auto;width:100%}
+nav.tabs button{border:none;background:none;border-radius:0;padding:13px 14px 11px;color:var(--muted);font-weight:500;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs button:hover{color:var(--ink);background:none}
+nav.tabs button.on{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+
+main{padding:20px;max-width:1180px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 4px;font-size:16px}
+.card .lead{margin:0 0 14px;color:var(--muted);font-size:13.5px}
+.sect-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sect-head h2{margin:0;font-size:21px}
+.sect-head p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.banner{padding:10px 14px;border-radius:12px;margin-bottom:14px;font-size:14px;display:flex;gap:8px;align-items:center}
+.banner.demo{background:var(--warn-soft);border:1px solid #f3d595;color:#7a4a05}
+.banner.fige{background:var(--primary-soft);border:1px solid #a9d9e2;color:#0a5563}
+.banner.err{background:var(--danger-soft);border:1px solid #f1b3ac;color:var(--danger)}
+
+/* Pastilles de statut */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-weight:600;font-size:13px;line-height:1.35;white-space:nowrap;background:#eef2f5;color:var(--ink)}
+.chip .q{font-weight:500;font-size:11px;opacity:.85}
+.st-ABS{background:var(--ABS-bg);color:var(--ABS-fg)} .st-TP{background:var(--TP-bg);color:var(--TP-fg)}
+.st-CONGRES{background:var(--CONGRES-bg);color:var(--CONGRES-fg)} .st-FORMATION{background:var(--FORMATION-bg);color:var(--FORMATION-fg)}
+.st-ADMIN{background:var(--ADMIN-bg);color:var(--ADMIN-fg)} .st-TLT{background:var(--TLT-bg);color:var(--TLT-fg)}
+.st-FRAIS{background:var(--FRAIS-bg);color:var(--FRAIS-fg)} .st-RCP{background:var(--RCP-bg);color:var(--RCP-fg)}
+.st-MW{background:var(--MW-bg);color:var(--MW-fg)} .st-OFF{background:#f1f3f5;color:#8a96a0;font-weight:500}
+.legend{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12.5px;color:var(--muted)}
+.legend .chip{font-size:12px}
+
+/* ---------- Grille semaine ---------- */
+.grille-card{padding:0;overflow:hidden}
+.grille-card .gc-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fbfdfe,#f4f9fa)}
+table.grille{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;background:#fff}
+.grille th,.grille td{border-bottom:1px solid var(--line-2);border-right:1px solid var(--line-2);padding:10px 8px;text-align:center;vertical-align:middle}
+.grille th:last-child,.grille td:last-child{border-right:none}
+.grille thead .titre th{font-size:18px;font-weight:700;padding:14px;color:var(--primary);letter-spacing:.04em;background:#fff}
+.grille thead .introw th{font-weight:500;font-size:14px;background:var(--primary-soft);color:#0a5563;cursor:pointer}
+.grille thead .introw .chip{background:#fff;color:var(--primary);border:1px solid #a9d9e2;margin:0 2px}
+.grille thead .cols th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--surface-2)}
+.grille td.jour{text-align:left;padding-left:16px}
+.grille .dname{font-weight:700;font-size:14px;letter-spacing:.03em}
+.grille .ddate{font-size:12.5px;color:var(--muted)}
+.grille tr.today td{background:#f3fbfc}
+.grille tr.today td.jour{box-shadow:inset 4px 0 0 var(--accent)}
+.grille tr.today .dname::after{content:"Aujourd'hui";margin-left:8px;font-size:10.5px;font-weight:600;color:#fff;background:var(--accent);padding:1px 7px;border-radius:999px;vertical-align:2px;letter-spacing:0}
+.grille td.val .v{display:flex;flex-direction:column;align-items:center;gap:4px}
+.grille tr.ferie td{background:repeating-linear-gradient(135deg,#24323b 0 12px,#2c3c46 12px 24px);color:#fff;font-weight:600;font-size:14px;padding:14px;letter-spacing:.05em}
+.grille td.frais{cursor:pointer;transition:background .15s}
+.grille td.frais:hover{background:#effaf7}
+.grille td.frais .v:empty::before{content:"+ attribuer";font-size:12px;color:#9fb3bd;font-weight:500}
 .fige-on .grille td.frais{cursor:default}
-.fige-on .grille td.frais:hover{outline:none}
-.nbbox{display:grid;grid-template-columns:repeat(3,auto);gap:1px 6px;font-size:11px;font-weight:700;text-align:left;justify-content:center}
-.nbbox span::after{content:"";display:inline-block;width:10px;height:10px;line-height:10px;border:1px solid #333;margin-left:2px;vertical-align:-1px;font-size:9px;text-align:center}
-.nbbox span.full::after{content:"✓"}
-.nbbox span.half::after{content:"½"}
-table.repart{width:100%;border-collapse:collapse}
-.repart th,.repart td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
-.repart td.n{font-weight:700;font-size:17px;width:50px}
-.repart .q{font-size:12px;color:var(--muted)}
-td.nb{font-weight:700;cursor:pointer}
-td.nb .man{display:block;font-size:10px;font-weight:400;color:var(--warn)}
-.col-jour{width:13%}.col-frais{width:12%}.col-mw{width:8%}.col-abs{width:15%}.col-tp{width:11%}.col-tlt{width:9%}.col-rcp{width:9%}.col-rep{width:17%}.col-nb{width:6%}
-.notes-print{margin-top:6px;text-align:center;font-style:italic;white-space:pre-wrap}
-.legend{margin-top:10px;font-size:13px;color:var(--muted)}
+.fige-on .grille td.frais:hover{background:none}
+.fige-on .grille td.frais .v:empty::before{content:none}
+.nbbox{display:grid;grid-template-columns:repeat(3,auto);gap:3px 8px;font-size:11px;font-weight:600;text-align:left;justify-content:center;color:var(--ink)}
+.nbbox span{display:inline-flex;align-items:center;gap:3px}
+.nbbox span::before{content:"";width:9px;height:9px;border-radius:50%;border:1.5px solid #c3d2d9;background:#fff;flex:none}
+.nbbox span.full::before{background:var(--accent);border-color:var(--accent)}
+.nbbox span.half::before{background:linear-gradient(90deg,var(--accent) 50%,#fff 50%);border-color:var(--accent)}
+.nbbox span:not(.full):not(.half){color:#a5b4bc;text-decoration:line-through}
+td.nb{cursor:pointer}
+.nbbadge{display:inline-grid;place-items:center;min-width:42px;height:42px;padding:0 6px;border-radius:50%;background:linear-gradient(180deg,var(--primary-2),var(--primary));color:#fff;font-weight:700;font-size:16px;box-shadow:0 2px 8px rgba(11,110,128,.25)}
+td.nb .man{display:block;font-size:10.5px;font-weight:600;color:var(--warn);margin-top:3px}
+.col-jour{width:13%}.col-frais{width:11%}.col-mw{width:8%}.col-abs{width:16%}.col-tp{width:11%}.col-tlt{width:9%}.col-rcp{width:8%}.col-rep{width:17%}.col-nb{width:7%}
+.notes-print{padding:12px 18px;text-align:center;font-style:italic;white-space:pre-wrap;color:var(--muted);border-top:1px solid var(--line-2)}
+.gc-foot{padding:12px 18px;border-top:1px solid var(--line-2);background:var(--surface-2)}
 
-.grille tr.introw th{font-weight:400;font-size:14px;padding:6px;cursor:pointer;background:#f7f9fc}
-.encadre{color:var(--accent);font-weight:600;margin:0 0 10px}
+/* À qui répartir */
+.repart{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px}
+.rcard{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface-2)}
+.rcard .rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.rcard .rh strong{font-size:14px}
+.rcard .num{font-size:22px;font-weight:700;color:var(--primary)}
+.rcard .num small{font-size:11px;font-weight:500;color:var(--muted);margin-left:3px}
+.rcard .who{display:flex;flex-wrap:wrap;gap:4px}
+.rcard .who .chip{background:#fff;border:1px solid #cfe7ec;color:#0a5563}
+.rcard .non{margin-top:8px;font-size:12px;color:var(--muted)}
+.rcard.today{border-color:var(--accent);box-shadow:0 0 0 3px rgba(20,184,166,.12)}
+
+/* ---------- Calendrier mensuel ---------- */
+.cal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.cal-head h2{margin:0;font-size:21px;text-transform:capitalize}
+.cal{display:grid;grid-template-columns:42px repeat(5,minmax(0,1fr));gap:8px}
+.cday{min-width:0;overflow:hidden}
+.cal .dow{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;text-align:center;padding:4px 0}
+.cal .wn{display:grid;place-items:center;font-size:11.5px;font-weight:700;color:var(--primary);background:var(--primary-soft);border-radius:10px;cursor:pointer;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.05em}
+.cal .wn:hover{background:#cbe9ee}
+.cday{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 9px;min-height:118px;cursor:pointer;display:flex;flex-direction:column;gap:5px;transition:box-shadow .15s,border-color .15s}
+.cday:hover{border-color:#a9d9e2;box-shadow:var(--shadow)}
+.cday.out{opacity:.4}
+.cday.today{border-color:var(--accent);box-shadow:0 0 0 3px rgba(20,184,166,.15)}
+.cday .ct{display:flex;justify-content:space-between;align-items:center}
+.cday .dn{font-weight:700;font-size:15px}
+.cday.today .dn{background:var(--accent);color:#fff;border-radius:999px;padding:0 8px}
+.cday .nbs{font-size:11.5px;font-weight:700;color:#fff;background:var(--primary);border-radius:999px;padding:1px 8px}
+.cday .chips{display:flex;flex-wrap:wrap;gap:3px}
+.cday .chip{font-size:11px;padding:1px 7px}
+.cday .ints{font-size:11px;color:var(--muted);margin-top:auto}
+.cday.ferie{background:repeating-linear-gradient(135deg,#f3f5f7 0 10px,#eceff2 10px 20px);cursor:default}
+.cday.ferie .fl{font-size:11.5px;color:var(--muted);font-weight:600}
+
+/* ---------- Ma saisie ---------- */
+.mebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--primary-2),var(--primary));flex:none;font-size:14px}
+.avatar.sm{width:32px;height:32px;font-size:12px}
+.avatar.i1{background:linear-gradient(135deg,#7c5cff,#5b3fd1)} .avatar.i2{background:linear-gradient(135deg,#f472b6,#c0367d)}
+.mebar select{font-weight:600;font-size:16px;padding:8px 12px}
+.encadre{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,#efe9ff,#fdf0f7);border:1px solid #ddd2fb;border-radius:12px;padding:10px 14px;margin-bottom:16px;font-size:14px}
 .encadre:empty{display:none}
+.daycards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.dcard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.dcard.today{border-color:var(--accent);box-shadow:0 0 0 3px rgba(20,184,166,.13),var(--shadow)}
+.dcard .dh{display:flex;justify-content:space-between;align-items:baseline}
+.dcard .dh strong{font-size:15px}
+.dcard .dh span{font-size:12.5px;color:var(--muted)}
+.dcard label.f{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;margin-bottom:3px}
+.dcard select{width:100%;font-weight:600}
+.dcard .def{font-size:11.5px;color:var(--muted);margin-top:3px}
+.dcard.ferie{background:repeating-linear-gradient(135deg,#f7f9fa 0 10px,#f0f3f5 10px 20px);box-shadow:none}
+.dcard.ferie .fl{color:var(--muted);font-weight:600;font-size:13px}
+.split{display:grid;grid-template-columns:1fr;gap:8px}
+select[data-v="ABS"]{background:var(--ABS-bg);color:var(--ABS-fg);border-color:#f3b8b2}
+select[data-v="TP"]{background:var(--TP-bg);color:var(--TP-fg)}
+select[data-v="CONGRES"]{background:var(--CONGRES-bg);color:var(--CONGRES-fg);border-color:#d6c4f7}
+select[data-v="FORMATION"]{background:var(--FORMATION-bg);color:var(--FORMATION-fg);border-color:#f2d39a}
+select[data-v="ADMIN"]{background:var(--ADMIN-bg);color:var(--ADMIN-fg)}
+select[data-v="TLT"]{background:var(--TLT-bg);color:var(--TLT-fg);border-color:#b5d2fa}
+select[data-v="FRAIS"]{background:var(--FRAIS-bg);color:var(--FRAIS-fg);border-color:#a9e3d5}
+select[data-v=""]{color:var(--ok)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:var(--RCP-bg);color:var(--RCP-fg);font-weight:600;font-size:13px;cursor:pointer}
+.toggle input{width:18px;height:18px;accent-color:var(--RCP-fg)}
+
 /* ---------- Internes ---------- */
-table.tab{width:100%;border-collapse:collapse}
-.tab th,.tab td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:middle}
-.tab th{font-size:13px;color:var(--muted);font-weight:600}
-.tab tr.now td{background:#f0f5fb}
-.tab .wk{font-weight:600;white-space:nowrap}
-.tab .dates{font-size:12px;color:var(--muted);font-weight:400}
-.senior select{min-width:120px;font-weight:700}
-.tag{display:inline-block;font-size:11px;border-radius:10px;padding:1px 8px;margin-left:4px;vertical-align:middle}
-.tag.prop{background:#eceef2;color:var(--muted)}
-.tag.val{background:#e5f3ea;color:var(--ok)}
-.tag.man{background:#e7eef8;color:var(--accent)}
-.alert{display:block;font-size:12px;color:var(--warn);margin-top:3px}
-label.blk{display:block;margin:10px 0 4px;font-weight:600}
-/* ---------- Saisie ---------- */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px}
-table.saisie{width:100%;border-collapse:collapse}
-.saisie th,.saisie td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left}
-.saisie select{width:100%}
-.saisie .def{font-size:12px;color:var(--muted)}
-.saisie tr.ferie td{color:var(--muted);background:#f0f0f0}
-table.simple{border-collapse:collapse;width:100%;background:#fff}
-.simple th,.simple td{border:1px solid var(--line);padding:6px 8px;text-align:center}
-.simple th:first-child,.simple td:first-child{text-align:left}
-label.chk{display:flex;gap:8px;align-items:center;padding:4px 0}
+.int-head{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.int-pill{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 16px 5px 5px;box-shadow:var(--shadow);font-weight:600}
+table.tab{width:100%;border-collapse:separate;border-spacing:0}
+.tab th,.tab td{border-bottom:1px solid var(--line-2);padding:12px 10px;text-align:left;vertical-align:middle}
+.tab th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;background:var(--surface-2)}
+.tab tr.now td{background:#f3fbfc}
+.tab tr.now td.wk{box-shadow:inset 4px 0 0 var(--accent)}
+.tab .wk{font-weight:700;white-space:nowrap}
+.tab .dates{font-size:12px;color:var(--muted);font-weight:500}
+.senior select{min-width:140px;font-weight:700;border-radius:999px;padding:7px 14px;background:var(--primary-soft);border-color:#a9d9e2;color:#0a5563}
+.tag{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:2px 9px;margin-left:6px;vertical-align:middle}
+.tag.prop{background:#eef2f5;color:var(--muted)}
+.tag.val{background:var(--ok-soft);color:var(--ok)}
+.tag.man{background:#e4eefb;color:#1d5fb4}
+.alert{display:block;font-size:12px;color:var(--warn);margin-top:4px;font-weight:500}
 
-/* ---------- Écran du code ---------- */
-#login{max-width:420px;margin:60px auto;padding:0 16px}
-#login .card{padding:22px}
-#login input{width:100%;margin:8px 0 12px}
+/* ---------- Bilan / paramètres ---------- */
+table.simple{border-collapse:separate;border-spacing:0;width:100%;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.simple th,.simple td{border-bottom:1px solid var(--line-2);padding:10px 12px;text-align:center}
+.simple tr:last-child td{border-bottom:none}
+.simple th{background:var(--surface-2);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.simple th:first-child,.simple td:first-child{text-align:left;font-weight:600}
+.bar-cell{display:flex;align-items:center;gap:8px;justify-content:center}
+.bar-cell i{display:block;height:7px;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--primary-2));min-width:2px}
+label.blk{display:block;margin:12px 0 5px;font-weight:600;font-size:14px}
+label.chk{display:flex;gap:10px;align-items:center;padding:7px 0;font-size:14px}
+label.chk input{width:18px;height:18px;accent-color:var(--primary)}
+.regle{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 16px}
 
-dialog{border:1px solid var(--line);border-radius:8px;padding:18px;max-width:92vw;width:420px}
-dialog::backdrop{background:rgba(0,0,0,.35)}
+/* ---------- Connexion ---------- */
+#login{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(140deg,#0a5d6d,#0b6e80 45%,#1aa3b8)}
+#login .card{width:100%;max-width:400px;padding:30px 28px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+#login .logo{background:var(--primary-soft);border-color:#a9d9e2;margin-bottom:14px;width:52px;height:52px}
+#login .logo svg{width:28px;height:28px}
+#login h2{margin:0;font-size:22px}
+#login input[type=password]{width:100%;margin:8px 0 10px;padding:12px 14px;font-size:16px}
+#login label{font-weight:600;font-size:14px}
+
+dialog{border:none;border-radius:16px;padding:22px;max-width:92vw;width:440px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,40,50,.45);backdrop-filter:blur(2px)}
 dialog h3{margin-top:0}
-dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex-start;margin-top:14px;flex-wrap:wrap}
-#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
-#toast.on{opacity:.95}
+dialog select,dialog input{width:100%}
+dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex-start;margin-top:16px;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(10px);background:#0f2a37;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:all .2s;pointer-events:none;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+#toast.on{opacity:.97;transform:translateX(-50%) translateY(0)}
 
-/* ---------- Téléphone : la grille devient une liste de cartes ---------- */
+/* ---------- Tablette ---------- */
+@media screen and (max-width:1000px){
+  .daycards{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+}
+/* ---------- Téléphone ---------- */
 @media screen and (max-width:720px){
-  main{padding:12px}
+  main{padding:14px}
+  header.top{padding:14px 16px}
+  .brand .sub{display:none}
+  .weeknav{width:100%;justify-content:space-between}
+  .weeknav .wk{min-width:0;flex:1}
   .grille,.grille tbody,.grille tr,.grille td{display:block;width:100%}
   .grille thead .cols,.grille colgroup{display:none}
-  .grille thead tr.introw th{border:1px solid #333;border-top:none}
   .grille thead,.grille thead tr,.grille thead th{display:block;width:100%}
-  .grille tr{margin-bottom:10px;border:1px solid #333;background:#fff}
-  .grille td{border:none;border-bottom:1px solid var(--grey);display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right;padding:6px 10px}
-  .grille td::before{content:attr(data-l);font-weight:400;font-style:normal;color:var(--muted);text-align:left;font-size:13px}
-  .grille td.jour{background:var(--grey);justify-content:center}
+  .grille tr{margin:0 12px 12px;width:auto;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .grille thead tr{margin:0;border:none;border-radius:0}
+  .grille td{border:none;border-bottom:1px solid var(--line-2);display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right;padding:8px 12px}
+  .grille td:last-child{border-bottom:none}
+  .grille td::before{content:attr(data-l);font-weight:500;color:var(--muted);text-align:left;font-size:12.5px}
+  .grille td.jour{background:var(--surface-2);justify-content:flex-start;gap:8px;padding:10px 12px}
   .grille td.jour::before{content:none}
-  .grille td.val .v{text-align:right}
-  .grille td.val .it{display:inline}
-  .grille td.val .it+.it::before{content:" / "}
+  .grille td.jour .ddate{font-size:13px}
+  .grille td.val .v{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}
+  .grille td.val .v:empty{display:none}
   .grille tr.ferie td{justify-content:center}
   .grille tr.ferie td::before{content:none}
+  .grille tbody{padding-top:12px}
   .nbbox{grid-template-columns:repeat(5,auto)}
+  .cal{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+  .cday .chip{font-size:10px;padding:0 5px}
+  .cday .nbs{font-size:10px;padding:0 5px}
+  .cal .wn{display:none}
+  .cal .dow:first-child{display:none}
+  .cday{min-height:86px;padding:6px;gap:3px}
+  .cday .chips .chip:nth-child(n+4){display:none}
+  .cday .ints{display:none}
+  .cday .dn{font-size:13px}
   .tab thead{display:none}
   .tab,.tab tbody,.tab tr,.tab td{display:block;width:100%}
-  .tab tr{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff;padding:4px 0}
-  .tab td{border:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px;flex-wrap:wrap}
-  .tab td::before{content:attr(data-l);color:var(--muted);font-size:13px}
+  .tab tr{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:#fff;padding:4px 0;overflow:hidden}
+  .tab td{border:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;flex-wrap:wrap}
+  .tab td::before{content:attr(data-l);color:var(--muted);font-size:13px;font-weight:600}
   .tab td.wk::before{content:none}
-  .saisie thead{display:none}
-  .saisie tr{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
-  .saisie td{border:none;padding:2px}
-  .saisie td:first-child{grid-column:1/-1;font-weight:600}
-  .saisie td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--muted)}
+  .simple{font-size:13px}
+  .simple th,.simple td{padding:8px 6px}
 }
 
-/* ---------- Impression ---------- */
+/* ---------- Impression : format du Word ---------- */
 @media print{
   @page{size:A4 portrait;margin:12mm}
-  body{background:#fff;font-size:12px}
-  header,nav,.actions,.banner,.legend,.noprint,#toast{display:none!important}
+  body{background:#fff;font-size:12px;color:#000}
+  header.top,nav,.actions,.banner,.legend,.noprint,#toast,.gc-head,.gc-foot{display:none!important}
   main{padding:0;max-width:none}
-  .card{border:none;padding:0}
+  .card{border:none;padding:0;box-shadow:none;margin:0}
   #app,main,.card,#grilleWrap{width:auto!important;max-width:100%!important}
-  table.grille{width:100%!important;max-width:186mm}
-  .grille th,.grille td{padding:5px 3px}
+  table.grille{width:100%!important;max-width:186mm;border-collapse:collapse}
+  .grille th,.grille td{border:1px solid #000!important;padding:5px 3px;background:#fff!important;color:#000}
+  .grille thead .titre th{color:#000;font-weight:500;font-size:18px}
+  .grille thead .introw th{background:#fff!important;color:#000}
+  .grille thead .introw .chip{border:none;padding:0}
+  .grille .gris{background:#e3e5e9!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .grille td.jour{text-align:center;font-style:italic}
+  .grille tr.today .dname::after{content:none}
+  .grille tr.today td.jour{box-shadow:none}
+  .chip{background:none!important;color:#000!important;padding:0;font-size:13px;font-weight:700}
+  .grille td.frais .v:empty::before{content:none}
   .nbbox{font-size:9px;gap:0 4px}
-  .grille tr{page-break-inside:avoid}
+  .nbbox span::before{border-radius:0;border:1px solid #000;background:#fff!important;width:8px;height:8px}
+  .nbbox span.full::before{background:#000!important}
+  .nbbox span.half::before{background:linear-gradient(90deg,#000 50%,#fff 50%)!important}
+  .nbbox span:not(.full):not(.half){text-decoration:none;color:#000}
+  .nbbox span::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .nbbadge{background:none;color:#000;box-shadow:none;width:auto;height:auto;min-width:0;font-size:13px}
+  .grille tr.ferie td{background:#000!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .grille,.grille tbody,.grille tr,.grille td,.grille thead,.grille thead tr,.grille thead th{display:revert!important}
   .grille td::before{content:none!important}
-  .grille tr.ferie td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .grille .gris{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .grille td.val .it{display:block!important}
+  .grille td.val .v{display:block!important}
+  .grille td.val .chip{display:block!important;white-space:normal}
+  .grille thead .cols th{text-transform:none;letter-spacing:0;color:#000;font-weight:400;font-size:12px;background:#fff!important}
+  .grille thead .cols th.gris{background:#e3e5e9!important}
+  .grille .dname{font-size:12px} .grille .ddate{color:#000;font-size:11px}
+  .nbbox span.full::before,.nbbox span.half::before{border-color:#000!important}
+  .grille tr{page-break-inside:avoid}
   .senior select{border:none;appearance:none;-webkit-appearance:none;padding:0;background:none}
   .tag.prop,.tag.man{display:none}
-  .grille td.val .it+.it::before{content:none!important}
 }
 </style>
 </head>
@@ -167,131 +336,154 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
 <!-- Écran du code du service -->
 <section id="login" class="hidden">
   <div class="card">
-    <h2 style="margin-top:0;font-size:18px">Planning médecins ACP</h2>
-    <p class="muted small">CH Valenciennes – accès réservé au service.</p>
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#0b6e80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg></div>
+    <h2>Planning ACP</h2>
+    <p class="muted small" style="margin:4px 0 18px">Anatomie et cytologie pathologiques · CH Valenciennes<br>Accès réservé au service.</p>
     <label for="codeInput">Code du service</label>
-    <input id="codeInput" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false">
-    <label class="chk small"><input type="checkbox" id="codeRemember" checked> Se souvenir sur cet appareil</label>
-    <button class="primary" id="codeBtn" style="width:100%;margin-top:8px">Entrer</button>
-    <p id="codeErr" class="banner err hidden"></p>
+    <input id="codeInput" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" placeholder="••••••••••••••••">
+    <label class="chk small" style="font-weight:500"><input type="checkbox" id="codeRemember" checked> Se souvenir sur cet appareil</label>
+    <button class="primary" id="codeBtn" style="width:100%;margin-top:10px;padding:12px">Entrer</button>
+    <p id="codeErr" class="banner err hidden" style="margin-top:14px"></p>
   </div>
 </section>
 
 <!-- Application -->
 <div id="app" class="hidden">
-  <header>
-    <h1>Planning ACP – CH Valenciennes</h1>
-    <div class="bar">
+  <header class="top">
+    <div class="headrow">
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg></div>
+        <div><h1>Planning ACP</h1><div class="sub">Anatomie et cytologie pathologiques · CH Valenciennes</div></div>
+      </div>
       <div class="weeknav" id="weeknav">
-        <button id="prevW" aria-label="Semaine précédente">◀</button>
-        <div style="text-align:center"><strong id="wLabel"></strong><div class="dates" id="wDates"></div></div>
-        <button id="nextW" aria-label="Semaine suivante">▶</button>
-        <button id="todayW">Cette semaine</button>
+        <button id="prevW" aria-label="Précédent">◀</button>
+        <div class="wk"><strong id="wLabel"></strong><span id="wDates"></span></div>
+        <button id="nextW" aria-label="Suivant">▶</button>
+        <button id="todayW">Aujourd'hui</button>
       </div>
     </div>
-    <nav class="tabs" id="tabs">
-      <button data-tab="grille" class="on">Grille semaine</button>
-      <button data-tab="saisie">Ma saisie</button>
-      <button data-tab="internes">Internes</button>
-      <button data-tab="bilan">Bilan</button>
-      <button data-tab="params">Paramètres</button>
-    </nav>
   </header>
+  <nav class="tabs" id="tabs"><div class="tabs-in">
+    <button data-tab="grille" class="on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>Semaine</button>
+    <button data-tab="calendrier"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>Calendrier</button>
+    <button data-tab="saisie"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Ma saisie</button>
+    <button data-tab="internes"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M17 11l2 2 4-4"/></svg>Internes</button>
+    <button data-tab="bilan"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Bilan</button>
+    <button data-tab="params"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Paramètres</button>
+  </div></nav>
 
   <main>
     <div id="demoBanner" class="banner demo hidden">Mode démo : Firebase n'est pas encore configuré. Les données restent dans ce navigateur.</div>
     <div id="errBanner" class="banner err hidden"></div>
 
-    <!-- Onglet grille -->
+    <!-- Onglet semaine -->
     <section id="tab-grille">
-      <div id="figeBanner" class="banner fige hidden">Semaine figée : aucune modification possible tant qu'elle n'est pas défigée.</div>
-      <div class="actions">
-        <button class="primary" id="btnProposer">Proposer le frais médical</button>
-        <button id="btnFiger">Figer la semaine</button>
-        <button id="btnPrint">Imprimer</button>
+      <div id="figeBanner" class="banner fige hidden">🔒 Semaine figée : aucune modification possible tant qu'elle n'est pas défigée.</div>
+      <div class="card grille-card">
+        <div class="gc-head">
+          <div class="legend">
+            <span class="chip st-ABS">Absent</span><span class="chip st-TP">Temps partiel</span><span class="chip st-CONGRES">Congrès</span>
+            <span class="chip st-FORMATION">Formation</span><span class="chip st-ADMIN">Administratif</span><span class="chip st-TLT">Télétravail</span>
+            <span class="chip st-FRAIS">Frais médical</span><span class="chip st-RCP">RCP</span><span class="chip st-MW">MW</span>
+          </div>
+          <div class="actions">
+            <button class="primary" id="btnProposer"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.8L20 10l-5 3.6L16.5 20 12 16.6 7.5 20 9 13.6 4 10l6.1-1.2Z"/></svg>Proposer le frais</button>
+            <button id="btnFiger">Figer la semaine</button>
+            <button id="btnPrint"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimer</button>
+          </div>
+        </div>
+        <div id="grilleWrap"></div>
+        <div class="gc-foot small muted">Touchez une case « Frais médical » pour l'attribuer, ou le nombre de répartition pour le corriger à la main. Pastille pleine = reçoit des cas, à moitié = une demi-journée, barré = pas de cas.</div>
       </div>
-      <div class="card" id="grilleWrap"></div>
       <div class="card noprint">
-        <h3 style="margin:0 0 8px;font-size:16px">À qui répartir</h3>
-        <p class="muted small" style="margin-top:0">Calculé à partir des saisies : seuls l'absence (y compris congrès) et le temps partiel retirent le médecin ; RCP, formation, administratif, télétravail et frais médical ne changent rien (réglable dans Paramètres).</p>
+        <h3>À qui répartir</h3>
+        <p class="lead">Seuls l'absence (congrès compris) et le temps partiel retirent un médecin. RCP, formation, administratif, télétravail et frais médical ne changent rien.</p>
         <div id="repartWrap"></div>
       </div>
       <div class="card noprint">
-        <label for="notes"><strong>Remarques de la semaine</strong> <span class="muted small">(imprimées sous la grille, ex. « ½ MC = macro ». Ni donnée patient, ni motif d'absence.)</span></label>
-        <textarea id="notes" rows="3" maxlength="1000" style="width:100%;margin-top:6px"></textarea>
-        <div style="margin-top:6px"><button id="btnNotes">Enregistrer les remarques</button></div>
+        <h3><label for="notes">Remarques de la semaine</label></h3>
+        <p class="lead">Imprimées sous la grille (ex. « ½ MC = macro »). Ni donnée patient, ni motif d'absence.</p>
+        <textarea id="notes" rows="3" maxlength="1000" style="width:100%"></textarea>
+        <div style="margin-top:8px"><button id="btnNotes">Enregistrer les remarques</button></div>
       </div>
-      <div class="legend">
-        Cliquez sur une case « Frais médical » pour l'attribuer, sur « Nb répart. » pour corriger le nombre à la main.
-        (mat.) = matin, (ap.-m.) = après-midi. Dans « Nb répart. », ✓ = reçoit des cas, ½ = une demi-journée, case vide = pas de cas.
+    </section>
+
+    <!-- Onglet calendrier -->
+    <section id="tab-calendrier" class="hidden">
+      <div class="card">
+        <div class="cal-head">
+          <h2 id="calTitle"></h2>
+          <div class="actions"><button id="cPrev" aria-label="Mois précédent">◀</button><button id="cToday">Ce mois</button><button id="cNext" aria-label="Mois suivant">▶</button></div>
+        </div>
+        <div id="calWrap"></div>
+        <div class="legend" style="margin-top:12px"><span class="chip st-FRAIS">Frais médical</span><span class="chip st-ABS">Absent</span><span class="chip st-TP">Temps partiel</span><span class="chip st-CONGRES">Congrès</span><span>· la pastille bleue indique le nombre de répartition · touchez un jour pour ouvrir sa semaine</span></div>
       </div>
     </section>
 
     <!-- Onglet saisie -->
     <section id="tab-saisie" class="hidden">
       <div class="card">
-        <div class="bar">
-          <label for="meSel"><strong>Je suis :</strong></label>
-          <select id="meSel"></select>
-          <span class="muted small">Choix mémorisé sur cet appareil.</span>
+        <div class="mebar">
+          <div class="avatar" id="meAvatar"></div>
+          <div><label for="meSel" class="small muted" style="display:block;font-weight:600">Je suis</label><select id="meSel"></select></div>
+          <span class="muted small">Choix mémorisé sur cet appareil. Indiquez seulement le type, jamais le motif.</span>
         </div>
       </div>
       <div id="saisieInfo" class="encadre"></div>
-      <div id="figeBanner2" class="banner fige hidden">Semaine figée.</div>
-      <div class="card" id="saisieWrap"></div>
-      <p class="muted small">Le temps partiel fixe est prérempli : pour le lever une semaine donnée, choisissez « Présent ».
-        Cochez « RCP » si vous participez à la RCP du lundi soir. Indiquez seulement le type, jamais le motif.</p>
+      <div id="figeBanner2" class="banner fige hidden">🔒 Semaine figée.</div>
+      <div id="saisieWrap"></div>
+      <p class="muted small" style="margin-top:14px">Le temps partiel fixe est prérempli : pour le lever une semaine donnée, choisissez « Présent ». Cochez « RCP » si vous participez à la RCP du lundi soir.</p>
     </section>
 
     <!-- Onglet internes -->
     <section id="tab-internes" class="hidden">
-      <div class="card">
-        <div class="bar noprint" style="margin-bottom:8px">
-          <button id="iPrev" aria-label="Semaines précédentes">◀</button><strong id="iRange"></strong>
-          <button id="iNext" aria-label="Semaines suivantes">▶</button><button id="iToday">Aujourd'hui</button>
+      <div class="sect-head">
+        <div><h2>Seniors des internes</h2><p>Un senior différent pour chaque interne, présent toute la semaine, en équilibrant les semaines de chacun.</p></div>
+        <div class="actions noprint">
+          <button id="iPrev" aria-label="Semaines précédentes">◀</button><button id="iToday">Aujourd'hui</button><button id="iNext" aria-label="Semaines suivantes">▶</button>
           <button id="btnPrintI">Imprimer</button>
         </div>
-        <h3 style="margin:4px 0 6px;font-size:16px">Senior de chaque interne</h3>
-        <p class="muted small noprint">Proposé automatiquement à partir des absences saisies : un senior différent pour chaque interne,
-          présent toute la semaine (le temps partiel, la formation et l'administratif ne comptent pas comme absence), en équilibrant les semaines de chacun et sans garder le même senior deux semaines de suite.
-          Vous pouvez changer un nom à la main puis « Valider ». Entre parenthèses : jours de présence du senior (hors absences et congrès).</p>
+      </div>
+      <div class="int-head" id="intHead"></div>
+      <div class="card" style="padding:0;overflow:hidden">
         <div id="internesWrap"></div>
       </div>
+      <p class="muted small noprint"><strong id="iRange"></strong> · Le temps partiel, la formation et l'administratif ne comptent pas comme absence. Entre parenthèses : jours de présence du senior. Vous pouvez changer un nom à la main puis « Valider ».</p>
     </section>
 
     <!-- Onglet bilan -->
     <section id="tab-bilan" class="hidden">
-      <div class="card">
-        <div class="bar"><strong>Bilan de l'année</strong> <select id="bilanYear"></select></div>
-        <p class="muted small">Nombre de jours (une demi-journée = 0,5). Sert à équilibrer le frais médical.</p>
-        <div id="bilanWrap"></div>
+      <div class="sect-head">
+        <div><h2>Bilan de l'année</h2><p>Nombre de jours (une demi-journée = 0,5). Sert à équilibrer le frais médical et l'encadrement des internes.</p></div>
+        <select id="bilanYear"></select>
       </div>
+      <div id="bilanWrap"></div>
     </section>
 
     <!-- Onglet paramètres -->
     <section id="tab-params" class="hidden">
       <div class="card">
-        <h3 style="margin-top:0">Équipe</h3>
+        <h3>Équipe</h3>
         <label class="blk" for="pMeds">Médecins seniors (initiales, séparées par des virgules)</label>
         <input id="pMeds" style="width:100%">
         <label class="blk" for="pInternes">Internes (prénoms, séparés par des virgules)</label>
         <input id="pInternes" style="width:100%">
-        <label class="blk" for="pMin">Présence minimale d'un senior pour encadrer un interne (jours dans la semaine ; 5 = toute la semaine — le temps partiel ne compte pas comme absence)</label>
-        <input id="pMin" inputmode="decimal" style="width:80px">
+        <label class="blk" for="pMin">Présence minimale d'un senior pour encadrer un interne (jours ; 5 = toute la semaine)</label>
+        <input id="pMin" inputmode="decimal" style="width:90px">
       </div>
       <div class="card">
-        <h3 style="margin-top:0">Règle « Nb répart. »</h3>
-        <p class="muted small">Cochez les situations où le médecin <strong>ne reçoit pas de cas</strong> sur le créneau.
-          Chaque demi-journée compte 0,5. La RCP du lundi soir ne retire jamais. Réglage partagé par tout le service.</p>
-        <div id="regleWrap"></div>
+        <h3>Règle du nombre de répartition</h3>
+        <p class="lead">Cochez les situations où le médecin <strong>ne reçoit pas de cas</strong> sur la demi-journée. Réglage partagé par tout le service.</p>
+        <div id="regleWrap" class="regle"></div>
       </div>
-      <div class="actions"><button class="primary" id="btnParams">Enregistrer les paramètres</button></div>
+      <div class="actions" style="margin-bottom:16px"><button class="primary" id="btnParams">Enregistrer les paramètres</button></div>
       <div class="card">
-        <h3 style="margin-top:0">RCP du lundi soir</h3>
+        <h3>RCP du lundi soir</h3>
         <div id="rcpWrap"></div>
       </div>
       <div class="card">
-        <h3 style="margin-top:0">Cet appareil</h3>
+        <h3>Cet appareil</h3>
+        <p class="lead">Pour un ordinateur partagé, effacez le code après usage.</p>
         <button id="btnLogout">Oublier le code sur cet appareil</button>
       </div>
     </section>

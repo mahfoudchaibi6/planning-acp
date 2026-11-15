@@ -104,7 +104,8 @@ const state = {
   wid: todayWeekId(), all: {}, tab: "grille",
   meds: [...CFG.medecins], internes: [...(CFG.internes || [])],
   regle: { ...CFG.regleRepartition }, min: CFG.joursMinimumEncadrement ?? 3,
-  istart: todayWeekId()
+  istart: todayWeekId(),
+  month: (() => { const n = new Date(); return utc(n.getFullYear(), n.getMonth(), 1); })()
 };
 const W = id => state.all[id] || {};
 const isFige = (id = state.wid) => !!W(id).fige;
@@ -184,92 +185,130 @@ function computeInternes(lastId) {
 const internesDe = id => computeInternes([id, shiftWeek(state.istart, (CFG.semainesInternesAffichees || 8) - 1)].sort().pop())[id] || {};
 
 // ------------------------------------------------------------------ rendu : grille semaine (modèle Word)
-function cellItems(d, statuts) {
+const todayIso = () => { const n = new Date(); return iso(utc(n.getFullYear(), n.getMonth(), n.getDate())); };
+const chip = (txt, st, q) => `<span class="chip st-${st}">${esc(txt)}${q ? ` <span class="q">${q}</span>` : ""}</span>`;
+// Pastilles des médecins ayant un des statuts sur la journée (wk/id optionnels pour le calendrier)
+function chipsFor(d, statuts, id = state.wid) {
   const items = [];
   for (const m of state.meds) {
-    const st = SLOTS.map(s => eff(W(state.wid), d, m, s)); const hit = st.map(x => statuts.includes(x));
+    const st = SLOTS.map(s => eff(W(id), d, m, s)); const hit = st.map(x => statuts.includes(x));
     if (!hit[0] && !hit[1]) continue;
     const q = [];
     if (hit[0] && !hit[1]) q.push("mat."); if (!hit[0] && hit[1]) q.push("ap.-m.");
     const suf = { CONGRES: "congrès", FORMATION: "formation", ADMIN: "admin." };
-    for (const k of Object.keys(suf)) if (statuts.includes(k) && st.includes(k)) q.push(suf[k]);
-    items.push(`<span class="it">${esc(m)}${q.length ? ` <span class="q">(${q.join(", ")})</span>` : ""}</span>`);
+    for (const k of Object.keys(suf)) if (statuts.includes(k) && st.includes(k) && statuts.length > 1) q.push(suf[k]);
+    items.push(chip(m, st[hit[0] ? 0 : 1], q.length ? `(${q.join(", ")})` : ""));
   }
-  return `<span class="v">${items.join("")}</span>`;
+  return items.join("");
 }
+const cellItems = (d, statuts) => `<span class="v">${chipsFor(d, statuts)}</span>`;
+
 function renderGrille() {
-  const id = state.wid; const { year, week } = parseWeekId(id); const days = weekDays(id); const wk = W(id);
+  const id = state.wid; const { year, week } = parseWeekId(id); const days = weekDays(id); const wk = W(id); const tIso = todayIso();
   const ints = internesDe(id);
-  const intTxt = state.internes.map(i => { const a = ints[i]; return `${esc(i)} : <strong>${a?.med ? esc(a.med) : "—"}</strong>${a?.src === "prop" ? ` <span class="q noprint">(proposé)</span>` : ""}`; }).join(" &nbsp;·&nbsp; ");
+  const intTxt = state.internes.map(i => { const a = ints[i]; return `${esc(i)} <span class="chip">${a?.med ? esc(a.med) : "—"}</span>${a?.src === "prop" ? `<span class="q noprint" style="font-size:12px"> proposé</span>` : ""}`; }).join(" &nbsp;&nbsp; ");
   let h = `<table class="grille"><colgroup><col class="col-jour"><col class="col-frais"><col class="col-mw"><col class="col-abs"><col class="col-tp"><col class="col-tlt"><col class="col-rcp"><col class="col-rep"><col class="col-nb"></colgroup><thead>
     <tr class="titre"><th colspan="9">SEMAINE ${pad(week)}/${year}</th></tr>
-    ${state.internes.length ? `<tr class="introw"><th colspan="9">Seniors des internes — ${intTxt}</th></tr>` : ""}
+    ${state.internes.length ? `<tr class="introw"><th colspan="9">Seniors des internes · ${intTxt}</th></tr>` : ""}
     <tr class="cols"><th></th><th>Frais<br>médical</th><th>MW</th><th class="gris">ABS</th><th class="gris">TP</th><th>TLT</th><th>RCP</th><th colspan="2">Nb répart.</th></tr></thead><tbody>`;
   days.forEach((d, i) => {
     const date = iso(d); const fer = ferie(d);
-    if (fer) { h += `<tr class="ferie"><td colspan="9">${JOURS[i].toUpperCase()} ${frDate(d)} – FÉRIÉ (${esc(fer)})</td></tr>`; return; }
+    if (fer) { h += `<tr class="ferie"><td colspan="9">${JOURS[i].toUpperCase()} ${frDate(d)} · FÉRIÉ (${esc(fer)})</td></tr>`; return; }
     const { n, detail } = nbRepart(id, d); const man = wk.nb?.[date];
-    const mw = DERMA && DERMA.jours.includes(dow(d)) ? (dermaPresente(id, d) ? esc(DERMA.nom) : `<span class="q">${esc(DERMA.nom)} absente</span>`) : "";
-    const rc = state.meds.filter(m => rcp(id, d, m)).map(m => `<span class="it">${esc(m)}</span>`).join("");
-    h += `<tr><td class="jour">${JOURS[i].toUpperCase()}<br>${frDate(d)}</td>
+    const mw = DERMA && DERMA.jours.includes(dow(d)) ? (dermaPresente(id, d) ? chip(DERMA.nom, "MW") : chip(`${DERMA.nom} absente`, "OFF")) : "";
+    const rc = state.meds.filter(m => rcp(id, d, m)).map(m => chip(m, "RCP")).join("");
+    h += `<tr class="${date === tIso ? "today" : ""}"><td class="jour"><div class="dname">${JOURS[i].toUpperCase()}</div><div class="ddate">${frDate(d)}</div></td>
       <td class="val frais" data-l="Frais médical" data-date="${date}">${cellItems(d, ["FRAIS"])}</td>
-      <td class="val" data-l="MW">${mw}</td>
-      <td class="val gris" data-l="ABS">${cellItems(d, ["ABS", "CONGRES", "FORMATION", "ADMIN"])}</td>
-      <td class="val gris" data-l="TP">${cellItems(d, ["TP"])}</td>
-      <td class="val" data-l="TLT">${cellItems(d, ["TLT"])}</td>
+      <td class="val" data-l="MW"><span class="v">${mw}</span></td>
+      <td class="val gris" data-l="Absents">${cellItems(d, ["ABS", "CONGRES", "FORMATION", "ADMIN"])}</td>
+      <td class="val gris" data-l="Temps partiel">${cellItems(d, ["TP"])}</td>
+      <td class="val" data-l="Télétravail">${cellItems(d, ["TLT"])}</td>
       <td class="val" data-l="RCP"><span class="v">${rc}</span></td>
       <td data-l="Répartir à"><div class="nbbox">${state.meds.map(m => { const [a, b] = detail[m]; return `<span class="${a && b ? "full" : a || b ? "half" : ""}">${esc(m)}</span>`; }).join("")}</div></td>
-      <td class="nb" data-l="Nb répart." data-date="${date}" data-auto="${n}">${fmtNb(man ?? n)}${man != null ? `<span class="man">manuel</span>` : ""}</td></tr>`;
+      <td class="nb" data-l="Nb répart." data-date="${date}" data-auto="${n}"><span class="nbbadge">${fmtNb(man ?? n)}</span>${man != null ? `<span class="man">manuel</span>` : ""}</td></tr>`;
   });
   h += `</tbody></table>`;
   if (wk.notes) h += `<div class="notes-print">${esc(wk.notes)}</div>`;
   $("#grilleWrap").innerHTML = h;
 
   // Bloc « À qui répartir »
-  const rows = days.filter(d => !ferie(d)).map(d => {
+  const cards = days.filter(d => !ferie(d)).map(d => {
     const { n, detail } = nbRepart(id, d); const man = wk.nb?.[iso(d)];
-    const qui = state.meds.filter(m => detail[m].some(Boolean)).map(m => { const [a, b] = detail[m]; return a && b ? esc(m) : `${esc(m)} <span class="q">(${a ? "mat." : "ap.-m."})</span>`; });
+    const qui = state.meds.filter(m => detail[m].some(Boolean)).map(m => { const [a, b] = detail[m]; return `<span class="chip">${esc(m)}${a && b ? "" : ` <span class="q">${a ? "mat." : "ap.-m."}</span>`}</span>`; });
     const non = state.meds.filter(m => !detail[m].some(Boolean));
-    return `<tr><td><strong>${JOURS[dow(d) - 1]} ${frCourt(d)}</strong></td><td class="n">${fmtNb(man ?? n)}</td><td>${qui.join(", ") || "—"}${non.length ? `<div class="muted small">Pas de cas : ${non.map(esc).join(", ")}</div>` : ""}</td></tr>`;
+    return `<div class="rcard ${iso(d) === tIso ? "today" : ""}"><div class="rh"><strong>${JOURS[dow(d) - 1]} ${frCourt(d)}</strong><span class="num">${fmtNb(man ?? n)}<small>répart.</small></span></div>
+      <div class="who">${qui.join("") || "—"}</div>${non.length ? `<div class="non">Pas de cas : ${non.map(esc).join(", ")}</div>` : ""}</div>`;
   }).join("");
-  $("#repartWrap").innerHTML = rows ? `<table class="repart"><thead><tr><th>Jour</th><th>Nb</th><th>Répartir à</th></tr></thead><tbody>${rows}</tbody></table>` : `<p class="muted">Semaine entièrement fériée.</p>`;
+  $("#repartWrap").innerHTML = cards ? `<div class="repart">${cards}</div>` : `<p class="muted">Semaine entièrement fériée.</p>`;
 
   const f = isFige();
   document.body.classList.toggle("fige-on", f);
   $("#figeBanner").classList.toggle("hidden", !f);
-  $("#btnFiger").textContent = f ? "Défiger la semaine" : "Figer la semaine";
+  $("#btnFiger").textContent = f ? "🔓 Défiger la semaine" : "🔒 Figer la semaine";
   $("#btnProposer").disabled = f; $("#btnNotes").disabled = f; $("#notes").disabled = f;
   if (document.activeElement !== $("#notes")) $("#notes").value = wk.notes || "";
+}
+
+// ------------------------------------------------------------------ rendu : calendrier mensuel
+const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+function renderCalendrier() {
+  const m0 = state.month; const y = m0.getUTCFullYear(), mo = m0.getUTCMonth(); const tIso = todayIso();
+  $("#calTitle").textContent = `${MOIS[mo]} ${y}`;
+  const first = utc(y, mo, 1), last = utc(y, mo + 1, 0);
+  let wid = (() => { const r = isoWeek(first); return weekId(r.year, r.week); })();
+  const lastW = (() => { const r = isoWeek(last); return weekId(r.year, r.week); })();
+  let h = `<div class="cal"><div class="dow"></div>${JC.map(j => `<div class="dow">${j}</div>`).join("")}`;
+  for (; wid <= lastW; wid = shiftWeek(wid, 1)) {
+    const ints = internesDe(wid);
+    const intTxt = state.internes.map(i => `${esc(i[0])}: ${esc(ints[i]?.med || "—")}`).join(" · ");
+    h += `<div class="wn" data-week="${wid}" title="Ouvrir la semaine">S${parseWeekId(wid).week}</div>`;
+    weekDays(wid).forEach((d, k) => {
+      const out = d.getUTCMonth() !== mo; const fer = ferie(d); const date = iso(d);
+      if (fer) { h += `<div class="cday ferie ${out ? "out" : ""}"><div class="ct"><span class="dn">${d.getUTCDate()}</span></div><span class="fl">${esc(fer)}</span></div>`; return; }
+      const { n } = nbRepart(wid, d); const man = W(wid).nb?.[date];
+      h += `<div class="cday ${out ? "out" : ""} ${date === tIso ? "today" : ""}" data-week="${wid}">
+        <div class="ct"><span class="dn">${d.getUTCDate()}</span><span class="nbs" title="Nb répart.">${fmtNb(man ?? n)}</span></div>
+        <div class="chips">${chipsFor(d, ["FRAIS"], wid)}${chipsFor(d, ["ABS", "CONGRES"], wid)}${chipsFor(d, ["TP"], wid)}</div>
+        ${k === 0 && state.internes.length ? `<div class="ints">${intTxt}</div>` : ""}</div>`;
+    });
+  }
+  $("#calWrap").innerHTML = h + `</div>`;
 }
 
 // ------------------------------------------------------------------ rendu : saisie
 function me() { let v = null; try { v = localStorage.getItem("planningACP_me"); } catch {} return personnes().includes(v) ? v : state.meds[0]; }
 function optList(sel, mixte) {
-  const o = [`<option value="">— Présent</option>`];
-  if (mixte) o.push(`<option value="__mixte" disabled>(matin ≠ après-midi)</option>`);
+  const o = [`<option value="">✓ Présent</option>`];
+  if (mixte) o.push(`<option value="__mixte" disabled>Matin ≠ après-midi</option>`);
   for (const s of STATUTS) o.push(`<option value="${s.id}">${s.label}</option>`);
   return o.join("").replace(`value="${sel}"`, `value="${sel}" selected`);
 }
 function renderSaisie() {
-  const m = me(); const id = state.wid; const days = weekDays(id); const f = isFige(); const isDerma = DERMA && m === DERMA.nom;
+  const m = me(); const id = state.wid; const days = weekDays(id); const f = isFige(); const isDerma = DERMA && m === DERMA.nom; const tIso = todayIso();
   $("#meSel").innerHTML = personnes().map(x => `<option ${x === m ? "selected" : ""}>${esc(x)}</option>`).join("");
+  $("#meAvatar").textContent = m;
   $("#figeBanner2").classList.toggle("hidden", !f);
   const ints = internesDe(id); const enc = state.internes.filter(i => ints[i]?.med === m);
-  $("#saisieInfo").innerHTML = enc.length ? `Cette semaine, vous encadrez : <strong>${enc.map(esc).join(", ")}</strong>` : "";
-  let h = `<table class="saisie"><thead><tr><th>Jour</th><th>Journée</th><th>Matin</th><th>Après-midi</th><th>RCP lundi soir</th></tr></thead><tbody>`;
+  $("#saisieInfo").innerHTML = enc.length ? enc.map((i, k) => `<span class="avatar sm i${(state.internes.indexOf(i) % 2) + 1}">${esc(i.slice(0, 2))}</span>`).join("") + `<span>Cette semaine, vous encadrez <strong>${enc.map(esc).join(" et ")}</strong>.</span>` : "";
+  let h = `<div class="daycards">`;
   days.forEach((d, i) => {
     const date = iso(d); const fer = ferie(d);
-    if (fer) { h += `<tr class="ferie"><td>${JOURS[i]} ${frCourt(d)}</td><td colspan="4">Férié – ${esc(fer)}</td></tr>`; return; }
-    if (isDerma && !DERMA.jours.includes(dow(d))) { h += `<tr class="ferie"><td>${JOURS[i]} ${frCourt(d)}</td><td colspan="4">—</td></tr>`; return; }
+    const head = `<div class="dh"><strong>${JOURS[i]}</strong><span>${frCourt(d)}</span></div>`;
+    if (fer) { h += `<div class="dcard ferie">${head}<span class="fl">Férié · ${esc(fer)}</span></div>`; return; }
+    if (isDerma && !DERMA.jours.includes(dow(d))) { h += `<div class="dcard ferie">${head}<span class="fl">Pas de présence prévue</span></div>`; return; }
     const [vm, va] = SLOTS.map(s => eff(W(id), d, m, s)); const [dm, da] = SLOTS.map(s => defaultFor(d, m, s));
     const dis = f ? "disabled" : ""; const defTxt = s => s ? `<div class="def">par défaut : ${STATUT_LABEL[s]}</div>` : "";
-    h += `<tr><td>${JOURS[i]} ${frCourt(d)}</td>
-      <td data-l="Journée"><select data-date="${date}" data-slot="J" ${dis}>${optList(vm === va ? vm : "__mixte", vm !== va)}</select></td>
-      <td data-l="Matin"><select data-date="${date}" data-slot="M" ${dis}>${optList(vm)}</select>${defTxt(dm)}</td>
-      <td data-l="Après-midi"><select data-date="${date}" data-slot="AM" ${dis}>${optList(va)}</select>${defTxt(da)}</td>
-      <td data-l="RCP">${rcpPossible(d) && !isDerma ? `<label class="chk"><input type="checkbox" data-rcp="${date}" ${rcp(id, d, m) ? "checked" : ""} ${dis}> RCP</label>` : ""}</td></tr>`;
+    const jv = vm === va ? vm : "__mixte";
+    h += `<div class="dcard ${date === tIso ? "today" : ""}">${head}
+      <div><label class="f">Journée</label><select data-date="${date}" data-slot="J" data-v="${jv === "__mixte" ? "mixte" : jv}" ${dis}>${optList(jv, vm !== va)}</select></div>
+      <div class="split">
+        <div><label class="f">Matin</label><select data-date="${date}" data-slot="M" data-v="${vm}" ${dis}>${optList(vm)}</select>${defTxt(dm)}</div>
+        <div><label class="f">Après-midi</label><select data-date="${date}" data-slot="AM" data-v="${va}" ${dis}>${optList(va)}</select>${defTxt(da)}</div>
+      </div>
+      ${rcpPossible(d) && !isDerma ? `<label class="toggle">RCP du lundi soir <input type="checkbox" data-rcp="${date}" ${rcp(id, d, m) ? "checked" : ""} ${dis}></label>` : ""}
+    </div>`;
   });
-  $("#saisieWrap").innerHTML = h + `</tbody></table>`;
+  $("#saisieWrap").innerHTML = h + `</div>`;
 }
 function slotPatch(d, med, slot, val) { // renvoie la valeur à stocker (null = valeur par défaut)
   const def = defaultFor(d, med, slot);
@@ -348,12 +387,15 @@ function istartIds() { return Array.from({ length: CFG.semainesInternesAffichees
 function renderInternes() {
   const ids = istartIds(); const res = computeInternes(ids[ids.length - 1]); const today = todayWeekId();
   $("#iRange").textContent = `S${parseWeekId(ids[0]).week} → S${parseWeekId(ids[ids.length - 1]).week}`;
-  if (!state.internes.length) { $("#internesWrap").innerHTML = `<p class="muted">Aucun interne (voir Paramètres).</p>`; return; }
+  const av = i => `<span class="avatar sm i${(state.internes.indexOf(i) % 2) + 1}">${esc(i.slice(0, 2))}</span>`;
+  const cur = res[today] || {};
+  $("#intHead").innerHTML = state.internes.map(i => `<div class="int-pill">${av(i)}<span>${esc(i)} <span class="muted small" style="font-weight:500">· cette semaine :</span> ${cur[i]?.med ? esc(cur[i].med) : "—"}</span></div>`).join("");
+  if (!state.internes.length) { $("#internesWrap").innerHTML = `<p class="muted" style="padding:16px">Aucun interne (voir Paramètres).</p>`; return; }
   let h = `<table class="tab"><thead><tr><th>Semaine</th>${state.internes.map(i => `<th>${esc(i)}</th>`).join("")}<th class="noprint"></th></tr></thead><tbody>`;
   for (const id of ids) {
     const w = W(id); const days = weekDays(id); const r = res[id] || {}; const f = isFige(id);
     const fer = days.filter(ferie).map(d => `${JC[dow(d) - 1]} ${frCourt(d)} férié`);
-    h += `<tr class="${id === today ? "now" : ""}"><td class="wk">S${parseWeekId(id).week}${id === today ? " (cette semaine)" : ""}<div class="dates">${frCourt(days[0])} → ${frCourt(days[4])}${fer.length ? " · " + fer.join(", ") : ""}</div></td>`;
+    h += `<tr class="${id === today ? "now" : ""}"><td class="wk">S${parseWeekId(id).week}${id === today ? ` <span class="tag val">cette semaine</span>` : ""}<div class="dates">${frCourt(days[0])} → ${frCourt(days[4])}${fer.length ? " · " + fer.join(", ") : ""}</div></td>`;
     for (const i of state.internes) {
       const a = r[i] || { med: null, src: "none" };
       const opts = [`<option value="">—</option>`].concat(state.meds.map(m => { const d = dispoSenior(id, m); return `<option value="${esc(m)}" ${m === a.med ? "selected" : ""}>${esc(m)} (${fmtNb(d.n)}/${d.total} j)</option>`; })).join("");
@@ -384,8 +426,10 @@ function renderBilan() {
   const cur = todayWeekId(); const last = y < cur.slice(0, 4) ? `${y}-W53` : cur;
   const res = computeInternes([last, shiftWeek(state.istart, (CFG.semainesInternesAffichees || 8) - 1)].sort().pop());
   for (const [id, r] of Object.entries(res)) if (id.startsWith(y) && id <= last) for (const i of state.internes) { const m = r[i]?.med; if (m && t[m]) t[m].int[i]++; }
+  const mx = Math.max(1, ...state.meds.map(m => t[m].FRAIS)), mi = Math.max(1, ...state.meds.flatMap(m => state.internes.map(i => t[m].int[i])));
+  const bar = (v, max, txt) => `<div class="bar-cell"><i style="width:${Math.round(60 * v / max)}px"></i><span>${txt}</span></div>`;
   $("#bilanWrap").innerHTML = `<table class="simple"><thead><tr><th>Médecin</th><th>Frais médical (j)</th><th>RCP</th>${state.internes.map(i => `<th>Sem. avec ${esc(i)}</th>`).join("")}</tr></thead><tbody>` +
-    state.meds.map(m => `<tr><td>${esc(m)}</td><td>${fmtNb(t[m].FRAIS)}</td><td>${t[m].RCP}</td>${state.internes.map(i => `<td>${t[m].int[i]}</td>`).join("")}</tr>`).join("") + `</tbody></table>`;
+    state.meds.map(m => `<tr><td><span class="avatar sm" style="display:inline-grid;margin-right:8px;vertical-align:middle">${esc(m)}</span></td><td>${bar(t[m].FRAIS, mx, fmtNb(t[m].FRAIS))}</td><td>${t[m].RCP}</td>${state.internes.map(i => `<td>${bar(t[m].int[i], mi, t[m].int[i])}</td>`).join("")}</tr>`).join("") + `</tbody></table>`;
 }
 
 // ------------------------------------------------------------------ paramètres
@@ -400,16 +444,16 @@ function renderParams() {
 // ------------------------------------------------------------------ navigation
 function render() {
   const days = weekDays(state.wid); const { week, year } = parseWeekId(state.wid);
-  $("#wLabel").textContent = `Semaine ${week} / ${year}`;
-  $("#wDates").textContent = `du ${frDate(days[0])} au ${frDate(days[4])}`;
-  ({ grille: renderGrille, saisie: renderSaisie, internes: renderInternes, bilan: renderBilan, params: () => {} })[state.tab]();
+  $("#wLabel").textContent = `Semaine ${week} · ${year}`;
+  $("#wDates").textContent = `du ${frCourt(days[0])} au ${frCourt(days[4])}`;
+  ({ grille: renderGrille, calendrier: renderCalendrier, saisie: renderSaisie, internes: renderInternes, bilan: renderBilan, params: () => {} })[state.tab]();
 }
 function goWeek(id) { state.wid = id; history.replaceState(null, "", "#" + id); render(); }
 function setTab(t) {
   state.tab = t;
   document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
-  ["grille", "saisie", "internes", "bilan", "params"].forEach(s => $("#tab-" + s).classList.toggle("hidden", s !== t));
-  $("#weeknav").classList.toggle("hidden", t === "internes" || t === "bilan" || t === "params");
+  ["grille", "calendrier", "saisie", "internes", "bilan", "params"].forEach(s => $("#tab-" + s).classList.toggle("hidden", s !== t));
+  $("#weeknav").classList.toggle("hidden", !(t === "grille" || t === "saisie"));
   if (t === "params") renderParams();
   render();
 }
@@ -421,6 +465,10 @@ function bind() {
   $("#iPrev").onclick = () => { state.istart = shiftWeek(state.istart, -4); render(); };
   $("#iNext").onclick = () => { state.istart = shiftWeek(state.istart, 4); render(); };
   $("#iToday").onclick = () => { state.istart = todayWeekId(); render(); };
+  const shiftMonth = n => { state.month = utc(state.month.getUTCFullYear(), state.month.getUTCMonth() + n, 1); render(); };
+  $("#cPrev").onclick = () => shiftMonth(-1); $("#cNext").onclick = () => shiftMonth(1);
+  $("#cToday").onclick = () => { const n = new Date(); state.month = utc(n.getFullYear(), n.getMonth(), 1); render(); };
+  $("#calWrap").onclick = e => { const c = e.target.closest("[data-week]"); if (c) { state.wid = c.dataset.week; history.replaceState(null, "", "#" + state.wid); setTab("grille"); } };
   $("#tabs").onclick = e => { const b = e.target.closest("button[data-tab]"); if (b) setTab(b.dataset.tab); };
   $("#grilleWrap").onclick = e => {
     const f = e.target.closest("td.frais"); if (f) return openFraisDialog(f.dataset.date);
