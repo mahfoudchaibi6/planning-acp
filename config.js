@@ -12,12 +12,12 @@ window.PLANNING_CONFIG = {
   // (Paramètres du projet > Vos applications > Web).
   // Tant que apiKey vaut "A_REMPLIR" : MODE DÉMO (données dans ce navigateur).
   firebase: {
-    apiKey: "A_REMPLIR",
-    authDomain: "A_REMPLIR.firebaseapp.com",
-    projectId: "A_REMPLIR",
-    storageBucket: "A_REMPLIR.appspot.com",
-    messagingSenderId: "A_REMPLIR",
-    appId: "A_REMPLIR"
+    apiKey: "AIzaSyAwKcah1PSqIMPWbg4v3biMnuEszzDt1AU",
+    authDomain: "planning-acp.firebaseapp.com",
+    projectId: "planning-acp",
+    storageBucket: "planning-acp.firebasestorage.app",
+    messagingSenderId: "65973876997",
+    appId: "1:65973876997:web:bdc41bfdbfbbe964d15f6c"
   },
 
   // --- Pathologistes seniors (initiales) --------------------------------
