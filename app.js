@@ -138,13 +138,29 @@ function rcp(id, d, med) {
 const dermaPresente = (id, d) => DERMA && DERMA.jours.includes(dow(d)) && SLOTS.some(s => !["ABS", "CONGRES", "TP"].includes(eff(W(id), d, DERMA.nom, s)));
 
 // ------------------------------------------------------------------ répartition des cas
+// Les cas répartis le soir du jour J sont lisibles le jour ouvré suivant (J+1) à partir de 14h.
+// Fenêtre de lecture = après-midi de J+1 + journée de J+2 (jours ouvrés, hors week-end et fériés).
+// - Absent (ou congrès) à un moment de la fenêtre → ne reçoit rien ce soir-là.
+// - Sinon 0,5 pour l'après-midi de J+1 et 0,5 pour le matin de J+2, sauf si ce créneau
+//   est retiré par la règle (temps partiel par défaut).
+// La présence le jour J lui-même ne compte pas.
+const widOf = d => { const r = isoWeek(d); return weekId(r.year, r.week); };
+function jourOuvreSuivant(d, n = 1) { let x = d; while (n > 0) { x = addDays(x, 1); if (dow(x) <= 5 && !ferie(x)) n--; } return x; }
+const effAt = (d, m, s) => eff(W(widOf(d)), d, m, s);
+function fenetreLecture(d) { const d1 = jourOuvreSuivant(d, 1), d2 = jourOuvreSuivant(d, 2); return { d1, d2 }; }
 function nbRepart(id, d) {
-  let n = 0; const detail = {};
+  const { d1, d2 } = fenetreLecture(d);
+  let n = 0; const detail = {}, raison = {};
   for (const m of state.meds) {
-    const on = SLOTS.map(s => { const st = eff(W(id), d, m, s); return !st || !state.regle[st]; });
+    const fen = [[d1, "AM"], [d2, "M"], [d2, "AM"]].map(([x, s]) => ({ x, s, st: effAt(x, m, s) }));
+    const abs = fen.find(f => ABSENT.includes(f.st));
+    if (abs) { detail[m] = [false, false]; raison[m] = `${abs.st === "CONGRES" ? "congrès" : "absent"} ${JC[dow(abs.x) - 1].toLowerCase()} ${frCourt(abs.x)}`; continue; }
+    const on = [fen[0], fen[1]].map(f => !f.st || !state.regle[f.st]);
     detail[m] = on; n += on.filter(Boolean).length * 0.5;
+    if (!on[0] && !on[1]) raison[m] = "temps partiel";
+    else if (!on[0] || !on[1]) raison[m] = `TP ${JC[dow(on[0] ? d2 : d1) - 1].toLowerCase()} ${on[0] ? "mat." : "ap.-m."}`;
   }
-  return { n, detail };
+  return { n, detail, raison, d1, d2 };
 }
 
 // ------------------------------------------------------------------ internes : disponibilité et attribution
@@ -233,11 +249,12 @@ function renderGrille() {
 
   // Bloc « À qui répartir »
   const cards = days.filter(d => !ferie(d)).map(d => {
-    const { n, detail } = nbRepart(id, d); const man = wk.nb?.[iso(d)];
-    const qui = state.meds.filter(m => detail[m].some(Boolean)).map(m => { const [a, b] = detail[m]; return `<span class="chip">${esc(m)}${a && b ? "" : ` <span class="q">${a ? "mat." : "ap.-m."}</span>`}</span>`; });
+    const { n, detail, raison, d1 } = nbRepart(id, d); const man = wk.nb?.[iso(d)];
+    const qui = state.meds.filter(m => detail[m].some(Boolean)).map(m => { const [a, b] = detail[m]; return `<span class="chip" title="${esc(raison[m] || "")}">${esc(m)}${a && b ? "" : ` <span class="q">½</span>`}</span>`; });
     const non = state.meds.filter(m => !detail[m].some(Boolean));
-    return `<div class="rcard ${iso(d) === tIso ? "today" : ""}"><div class="rh"><strong>${JOURS[dow(d) - 1]} ${frCourt(d)}</strong><span class="num">${fmtNb(man ?? n)}<small>répart.</small></span></div>
-      <div class="who">${qui.join("") || "—"}</div>${non.length ? `<div class="non">Pas de cas : ${non.map(esc).join(", ")}</div>` : ""}</div>`;
+    return `<div class="rcard ${iso(d) === tIso ? "today" : ""}"><div class="rh"><strong>${JOURS[dow(d) - 1]} ${frCourt(d)} soir</strong><span class="num">${fmtNb(man ?? n)}<small>répart.</small></span></div>
+      <div class="lect">📖 Lecture ${JOURS[dow(d1) - 1].toLowerCase()} ${frCourt(d1)} dès 14h</div>
+      <div class="who">${qui.join("") || "—"}</div>${non.length ? `<div class="non">Pas de cas : ${non.map(m => `${esc(m)} <span class="why">(${esc(raison[m] || "")})</span>`).join(", ")}</div>` : ""}</div>`;
   }).join("");
   $("#repartWrap").innerHTML = cards ? `<div class="repart">${cards}</div>` : `<p class="muted">Semaine entièrement fériée.</p>`;
 

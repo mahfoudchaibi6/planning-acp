@@ -141,6 +141,8 @@ td.nb .man{display:block;font-size:10.5px;font-weight:600;color:var(--warn);marg
 .rcard .who{display:flex;flex-wrap:wrap;gap:4px}
 .rcard .who .chip{background:#fff;border:1px solid #cfe7ec;color:#0a5563}
 .rcard .non{margin-top:8px;font-size:12px;color:var(--muted)}
+.rcard .non .why{opacity:.8}
+.rcard .lect{font-size:12px;color:#0a5563;background:var(--primary-soft);border-radius:8px;padding:3px 8px;margin-bottom:8px;display:inline-block}
 .rcard.today{border-color:var(--accent);box-shadow:0 0 0 3px rgba(20,184,166,.12)}
 
 /* ---------- Calendrier mensuel ---------- */
@@ -393,11 +395,11 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
           </div>
         </div>
         <div id="grilleWrap"></div>
-        <div class="gc-foot small muted">Touchez une case « Frais médical » pour l'attribuer, ou le nombre de répartition pour le corriger à la main. Pastille pleine = reçoit des cas, à moitié = une demi-journée, barré = pas de cas.</div>
+        <div class="gc-foot small muted">Touchez une case « Frais médical » pour l'attribuer, ou le nombre de répartition pour le corriger à la main. Nb répart. = cas répartis le soir, lus le lendemain dès 14h. Pastille pleine = reçoit des cas, à moitié = ½, barré = pas de cas (voir le détail sous la grille).</div>
       </div>
       <div class="card noprint">
         <h3>À qui répartir</h3>
-        <p class="lead">Seuls l'absence (congrès compris) et le temps partiel retirent un médecin. RCP, formation, administratif, télétravail et frais médical ne changent rien.</p>
+        <p class="lead">Les cas répartis le soir sont lisibles le lendemain (jour ouvré) dès 14h. Un médecin reçoit les cas du soir s'il est présent <strong>le lendemain après-midi et le surlendemain</strong> : une absence (ou un congrès) sur cette période → pas de cas ; un temps partiel sur l'un des deux créneaux → ½. Sa présence le jour même ne compte pas.</p>
         <div id="repartWrap"></div>
       </div>
       <div class="card noprint">
@@ -473,7 +475,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
       </div>
       <div class="card">
         <h3>Règle du nombre de répartition</h3>
-        <p class="lead">Cochez les situations où le médecin <strong>ne reçoit pas de cas</strong> sur la demi-journée. Réglage partagé par tout le service.</p>
+        <p class="lead">Les cas du soir sont lus le lendemain après-midi et le surlendemain. Une absence ou un congrès sur cette période retire toujours le médecin. Cochez en plus les situations qui retirent ½ quand elles tombent le lendemain après-midi ou le surlendemain matin. Réglage partagé par tout le service.</p>
         <div id="regleWrap" class="regle"></div>
       </div>
       <div class="actions" style="margin-bottom:16px"><button class="primary" id="btnParams">Enregistrer les paramètres</button></div>
