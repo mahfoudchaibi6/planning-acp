@@ -153,7 +153,8 @@ const dermaPresente = (id, d) => DERMA && DERMA.jours.includes(dow(d)) && SLOTS.
 // ------------------------------------------------------------------ répartition des cas
 // Les cas répartis le soir du jour J sont lisibles le jour ouvré suivant (J+1) à partir de 14h.
 // Fenêtre de lecture = après-midi de J+1 + journée de J+2 (jours ouvrés, hors week-end et fériés).
-// - Absent (ou congrès) à un moment de la fenêtre → ne reçoit rien ce soir-là.
+// - Absence longue (≥ 2 jours ouvrés) à un moment de la fenêtre → ne reçoit rien ce soir-là.
+// - Absence courte (1 jour) : comme un temps partiel, seulement le jour même.
 // - Temps partiel (ou autre statut coché dans la règle) : compte le jour même (J) :
 //   journée entière → pas de répartition ce jour-là, demi-journée → ½.
 // La présence le jour J lui-même ne compte pas.
@@ -161,20 +162,37 @@ const widOf = d => { const r = isoWeek(d); return weekId(r.year, r.week); };
 function jourOuvreSuivant(d, n = 1) { let x = d; while (n > 0) { x = addDays(x, 1); if (dow(x) <= 5 && !ferie(x)) n--; } return x; }
 const effAt = (d, m, s) => eff(W(widOf(d)), d, m, s);
 function fenetreLecture(d) { const d1 = jourOuvreSuivant(d, 1), d2 = jourOuvreSuivant(d, 2); return { d1, d2 }; }
+// Absence « longue » = au moins 2 jours ouvrés d'affilée avec une absence (ou congrès).
+// Absence « courte » (1 seul jour, ou une demi-journée) = traitée comme un temps partiel.
+function jourOuvrePrecedent(d) { let x = d; do { x = addDays(x, -1); } while (dow(x) > 5 || ferie(x)); return x; }
+const jourAbsent = (x, m) => SLOTS.some(s => ABSENT.includes(effAt(x, m, s)));
+function absenceLongue(x, m) {
+  if (!jourAbsent(x, m)) return false;
+  return jourAbsent(jourOuvrePrecedent(x), m) || jourAbsent(jourOuvreSuivant(x, 1), m);
+}
 function nbRepart(id, d) {
   const { d1, d2 } = fenetreLecture(d);
   let n = 0; const detail = {}, raison = {};
   for (const m of state.meds) {
+    // Vacances / absence longue : pas de répartition si absent pendant la lecture (lendemain ap.-m. + surlendemain)
     const fen = [[d1, "AM"], [d2, "M"], [d2, "AM"]].map(([x, s]) => ({ x, s, st: effAt(x, m, s) }));
-    const abs = fen.find(f => ABSENT.includes(f.st));
-    if (abs) { detail[m] = [false, false]; raison[m] = `${abs.st === "CONGRES" ? "congrès" : "absent"} ${JC[dow(abs.x) - 1].toLowerCase()} ${frCourt(abs.x)}`; continue; }
-    // Temps partiel : le jour même (J), matin et après-midi. Les absences de J sont ignorées
-    // (seules comptent celles de la période de lecture, vérifiées plus haut).
-    const on = SLOTS.map(s => { const st = effAt(d, m, s); return !st || ABSENT.includes(st) || !state.regle[st]; });
+    const abs = fen.find(f => ABSENT.includes(f.st) && absenceLongue(f.x, m));
+    if (abs) {
+      let deb = abs.x, fin = abs.x;
+      for (let k = 0; k < 40 && jourAbsent(jourOuvrePrecedent(deb), m); k++) deb = jourOuvrePrecedent(deb);
+      for (let k = 0; k < 40 && jourAbsent(jourOuvreSuivant(fin, 1), m); k++) fin = jourOuvreSuivant(fin, 1);
+      detail[m] = [false, false]; raison[m] = `${abs.st === "CONGRES" ? "congrès" : "absent"} du ${frCourt(deb)} au ${frCourt(fin)}`; continue;
+    }
+    // Le jour même : temps partiel, ou absence courte (1 jour ou ½ journée) → pas de répartition (½ si demi-journée).
+    // Une absence longue le jour même ne compte pas (seule la période de lecture compte, voir plus haut).
+    const courte = !absenceLongue(d, m);
+    const on = SLOTS.map(s => { const st = effAt(d, m, s); if (!st) return true; if (ABSENT.includes(st)) return !courte; return !state.regle[st]; });
     detail[m] = on; n += on.filter(Boolean).length * 0.5;
-    const j1 = `${JC[dow(d) - 1].toLowerCase()} ${frCourt(d)}`;
-    if (!on[0] && !on[1]) raison[m] = `temps partiel ${j1}`;
-    else if (!on[0] || !on[1]) raison[m] = `temps partiel ${j1} ${on[0] ? "ap.-m." : "mat."}`;
+    const off = SLOTS.filter((s, k) => !on[k]).map(s => effAt(d, m, s));
+    const quoi = off.some(st => ABSENT.includes(st)) ? (off.includes("CONGRES") ? "congrès" : "absent") : "temps partiel";
+    const j = `${JC[dow(d) - 1].toLowerCase()} ${frCourt(d)}`;
+    if (!on[0] && !on[1]) raison[m] = `${quoi} ${j}`;
+    else if (!on[0] || !on[1]) raison[m] = `${quoi} ${j} ${on[0] ? "ap.-m." : "mat."}`;
   }
   return { n, detail, raison, d1, d2 };
 }
