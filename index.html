@@ -443,7 +443,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
     <!-- Onglet internes -->
     <section id="tab-internes" class="hidden">
       <div class="sect-head">
-        <div><h2>Seniors des internes</h2><p>Un senior différent pour chaque interne, présent toute la semaine, en équilibrant les semaines de chacun.</p></div>
+        <div><h2>Seniors des internes</h2><p>Un senior différent pour chaque interne, en évitant les absents et en équilibrant les semaines de chacun.</p></div>
         <div class="actions noprint">
           <button id="iPrev" aria-label="Semaines précédentes">◀</button><button id="iToday">Aujourd'hui</button><button id="iNext" aria-label="Semaines suivantes">▶</button>
           <button id="btnPrintI">Imprimer</button>
@@ -453,7 +453,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
       <div class="card" style="padding:0;overflow:hidden">
         <div id="internesWrap"></div>
       </div>
-      <p class="muted small noprint"><strong id="iRange"></strong> · Le temps partiel, la formation et l'administratif ne comptent pas comme absence. Entre parenthèses : jours de présence du senior. Vous pouvez changer un nom à la main puis « Valider ».</p>
+      <p class="muted small noprint"><strong id="iRange"></strong> · Seules l'absence et le congrès sont évités : temps partiel, télétravail, formation et administratif ne comptent pas. Entre parenthèses : jours d'absence du senior dans la semaine. Vous pouvez changer un nom à la main puis « Valider ».</p>
     </section>
 
     <!-- Onglet bilan -->
@@ -473,8 +473,6 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
         <input id="pMeds" style="width:100%">
         <label class="blk" for="pInternes">Internes (prénoms, séparés par des virgules)</label>
         <input id="pInternes" style="width:100%">
-        <label class="blk" for="pMin">Présence minimale d'un senior pour encadrer un interne (jours ; 5 = toute la semaine)</label>
-        <input id="pMin" inputmode="decimal" style="width:90px">
       </div>
       <div class="card">
         <h3>Règle du nombre de répartition</h3>

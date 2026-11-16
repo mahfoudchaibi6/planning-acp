@@ -199,9 +199,12 @@ function computeInternes(lastId) {
       const order = parseWeekId(id).week % 2 ? [...state.internes] : [...state.internes].reverse();
       for (const i of order) {
         if (r[i]) continue;
-        const c = state.meds.filter(m => !used.has(m)).map(m => ({ m, d: dispoSenior(id, m) })).filter(x => x.d.n >= Math.min(state.min, x.d.total));
+        // Pas de minimum de jours : on évite seulement les absences (absent ou congrès).
+        // Priorité au senior sans absence, sinon au moins absent ; on écarte celui absent toute la semaine.
+        const c = state.meds.filter(m => !used.has(m)).map(m => { const d = dispoSenior(id, m); return { m, d, abs: d.total - d.n }; })
+          .filter(x => x.d.total === 0 || x.d.n > 0);
         if (!c.length) { r[i] = { med: null, src: "none" }; continue; }
-        c.sort((a, b) => ((prev[i] === a.m) - (prev[i] === b.m)) || (total[a.m] - total[b.m]) || (parInt[a.m][i] - parInt[b.m][i]) || (b.d.n - a.d.n) || (hash(id + a.m) - hash(id + b.m)));
+        c.sort((a, b) => (a.abs - b.abs) || ((prev[i] === a.m) - (prev[i] === b.m)) || (total[a.m] - total[b.m]) || (parInt[a.m][i] - parInt[b.m][i]) || (hash(id + a.m) - hash(id + b.m)));
         r[i] = { med: c[0].m, src: "prop" }; used.add(c[0].m);
       }
     }
@@ -434,11 +437,11 @@ function renderInternes() {
     h += `<tr class="${id === today ? "now" : ""}"><td class="wk">S${parseWeekId(id).week}${id === today ? ` <span class="tag val">cette semaine</span>` : ""}<div class="dates">${frCourt(days[0])} → ${frCourt(days[4])}${fer.length ? " · " + fer.join(", ") : ""}</div></td>`;
     for (const i of state.internes) {
       const a = r[i] || { med: null, src: "none" };
-      const opts = [`<option value="">—</option>`].concat(state.meds.map(m => { const d = dispoSenior(id, m); return `<option value="${esc(m)}" ${m === a.med ? "selected" : ""}>${esc(m)} (${fmtNb(d.n)}/${d.total} j)</option>`; })).join("");
+      const opts = [`<option value="">—</option>`].concat(state.meds.map(m => { const d = dispoSenior(id, m); return `<option value="${esc(m)}" ${m === a.med ? "selected" : ""}>${esc(m)}${d.total - d.n > 0 ? ` (absent ${fmtNb(d.total - d.n)} j)` : ""}</option>`; })).join("");
       const tag = { val: `<span class="tag val">validé</span>`, man: `<span class="tag man">choisi</span>`, prop: `<span class="tag prop">proposé</span>`, none: "" }[a.src];
       let alert = "";
-      if (a.src === "none" && id >= today) alert = `<span class="alert">Aucun senior présent toute la semaine : choisissez à la main</span>`;
-      else if (a.med) { const d = dispoSenior(id, a.med); if (d.n < Math.min(state.min, d.total)) alert = `<span class="alert">⚠ ${esc(a.med)} est absent(e) une partie de la semaine (${fmtNb(d.n)}/${d.total} j)</span>`; }
+      if (a.src === "none" && id >= today) alert = `<span class="alert">Aucun senior disponible : choisissez à la main</span>`;
+      else if (a.med) { const d = dispoSenior(id, a.med); if (d.n < d.total) alert = `<span class="alert">⚠ ${esc(a.med)} est absent(e) ${fmtNb(d.total - d.n)} j cette semaine</span>`; }
       h += `<td class="senior" data-l="${esc(i)}"><span><select data-id="${id}" data-int="${esc(i)}" ${f ? "disabled" : ""}>${opts}</select>${tag}</span>${alert}</td>`;
     }
     h += `<td class="noprint" data-l="">${f ? `<span class="muted small">semaine figée</span>` : w.internes?.valide
@@ -470,7 +473,7 @@ function renderBilan() {
 
 // ------------------------------------------------------------------ paramètres
 function renderParams() {
-  $("#pMeds").value = state.meds.join(", "); $("#pInternes").value = state.internes.join(", "); $("#pMin").value = state.min;
+  $("#pMeds").value = state.meds.join(", "); $("#pInternes").value = state.internes.join(", ");
   $("#regleWrap").innerHTML = STATUTS.map(s => `<label class="chk"><input type="checkbox" data-st="${s.id}" ${state.regle[s.id] ? "checked" : ""}> ${s.label}</label>`).join("");
   const r = CFG.rcpRoulement || [];
   $("#rcpWrap").innerHTML = r.length ? `<p>Roulement du lundi soir : ${r.map(esc).join(" → ")}</p>`
@@ -552,11 +555,10 @@ function bind() {
   $("#btnParams").onclick = async () => {
     const split = s => [...new Set(s.split(/[,;]/).map(x => x.trim()).filter(Boolean))];
     const medecins = split($("#pMeds").value), internes = split($("#pInternes").value);
-    const joursMin = Math.max(0.5, Math.min(5, Number(String($("#pMin").value).replace(",", ".")) || 5));
     const regle = {}; document.querySelectorAll("#regleWrap input").forEach(i => (regle[i.dataset.st] = i.checked));
     if (medecins.length < 2) { toast("Il faut au moins 2 médecins"); return; }
     if (internes.length > medecins.length) { toast("Plus d'internes que de médecins"); return; }
-    try { await store.setParams({ medecins, internes, joursMin, regle }); Object.assign(state, { meds: medecins, internes, min: joursMin, regle }); cacheInt = null; toast("Paramètres enregistrés"); }
+    try { await store.setParams({ medecins, internes, regle }); Object.assign(state, { meds: medecins, internes, regle }); cacheInt = null; toast("Paramètres enregistrés"); }
     catch (e) { showErr(e); }
   };
   $("#btnCopyCode").onclick = async () => {

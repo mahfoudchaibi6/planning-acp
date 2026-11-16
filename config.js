@@ -29,11 +29,8 @@ window.PLANNING_CONFIG = {
 
   // --- Internes -----------------------------------------------------------
   internes: ["Florestan", "Emma"],
-  // Un senior n'encadre un interne que s'il est présent au moins ce nombre de
-  // jours dans la semaine (hors fériés). 5 = toute la semaine.
-  // Le temps partiel, la formation et l'administratif n'empêchent pas d'encadrer ;
-  // seuls l'absence (ABS) et le congrès comptent.
-  joursMinimumEncadrement: 5,
+  // Seniors des internes : pas de minimum de jours. On évite seulement les absences
+  // (absent, congrès) ; temps partiel, télétravail, formation et administratif ne comptent pas.
 
   // --- Temps partiels fixes, préremplis chaque semaine -----------------
   // jour : 1 = lundi … 5 = vendredi ; creneau : "J" (journée), "M" (matin), "AM" (après-midi)
