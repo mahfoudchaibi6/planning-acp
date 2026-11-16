@@ -313,6 +313,8 @@ function optList(sel, mixte) {
   for (const s of STATUTS) o.push(`<option value="${s.id}">${s.label}</option>`);
   return o.join("").replace(`value="${sel}"`, `value="${sel}" selected`);
 }
+// Jours où la personne peut saisir (hors fériés ; pour MW, seulement ses jours de présence)
+function joursSaisie(id, m) { return weekDays(id).filter(d => !ferie(d) && !(DERMA && m === DERMA.nom && !DERMA.jours.includes(dow(d)))); }
 function renderSaisie() {
   const m = me(); const id = state.wid; const days = weekDays(id); const f = isFige(); const isDerma = DERMA && m === DERMA.nom; const tIso = todayIso();
   $("#meSel").innerHTML = personnes().map(x => `<option ${x === m ? "selected" : ""}>${esc(x)}</option>`).join("");
@@ -320,7 +322,11 @@ function renderSaisie() {
   $("#figeBanner2").classList.toggle("hidden", !f);
   const ints = internesDe(id); const enc = state.internes.filter(i => ints[i]?.med === m);
   $("#saisieInfo").innerHTML = enc.length ? enc.map((i, k) => `<span class="avatar sm i${(state.internes.indexOf(i) % 2) + 1}">${esc(i.slice(0, 2))}</span>`).join("") + `<span>Cette semaine, vous encadrez <strong>${enc.map(esc).join(" et ")}</strong>.</span>` : "";
-  let h = `<div class="daycards">`;
+  const jo = joursSaisie(id, m);
+  const toutAbs = jo.length > 0 && jo.every(d => SLOTS.every(sl => eff(W(id), d, m, sl) === "ABS"));
+  let h = `<div class="weekbar"><span class="muted small">Semaine du ${frCourt(days[0])} au ${frCourt(days[4])}</span>
+    <button id="btnSemaineAbs" class="${toutAbs ? "" : "btn-abs"}" data-v="${toutAbs ? "" : "ABS"}" ${f || !jo.length ? "disabled" : ""}>${toutAbs ? "✓ Présent toute la semaine" : "✕ Absent toute la semaine"}</button></div>
+  <div class="daycards">`;
   days.forEach((d, i) => {
     const date = iso(d); const fer = ferie(d);
     const head = `<div class="dh"><strong>${JOURS[i]}</strong><span>${frCourt(d)}</span></div>`;
@@ -504,6 +510,12 @@ function bind() {
     const f = e.target.closest("td.frais"); if (f) return openFraisDialog(f.dataset.date);
     const n = e.target.closest("td.nb"); if (n) return openNbDialog(n);
     if (e.target.closest("tr.introw")) setTab("internes");
+  };
+  $("#saisieWrap").onclick = e => {
+    const b = e.target.closest("#btnSemaineAbs"); if (!b || isFige()) return;
+    const m = me(); const v = b.dataset.v; const jo = joursSaisie(state.wid, m);
+    if (v === "ABS" && !confirm(`Mettre ${m} absent(e) toute la semaine (${jo.length} jour(s)) ?`)) return;
+    run(store.patch(state.wid, patchSlots(jo.flatMap(d => SLOTS.map(slot => ({ d, med: m, slot, val: v || defaultFor(d, m, slot) }))))), v ? "Absent toute la semaine" : "Présent toute la semaine");
   };
   $("#saisieWrap").onchange = e => {
     const m = me();
