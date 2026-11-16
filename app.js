@@ -154,8 +154,8 @@ const dermaPresente = (id, d) => DERMA && DERMA.jours.includes(dow(d)) && SLOTS.
 // Les cas répartis le soir du jour J sont lisibles le jour ouvré suivant (J+1) à partir de 14h.
 // Fenêtre de lecture = après-midi de J+1 + journée de J+2 (jours ouvrés, hors week-end et fériés).
 // - Absent (ou congrès) à un moment de la fenêtre → ne reçoit rien ce soir-là.
-// - Sinon 0,5 pour l'après-midi de J+1 et 0,5 pour le matin de J+2, sauf si ce créneau
-//   est retiré par la règle (temps partiel par défaut).
+// - Temps partiel (ou autre statut coché dans la règle) : compte le jour J lui-même
+//   (journée entière → pas de cas ce soir-là, demi-journée → ½).
 // La présence le jour J lui-même ne compte pas.
 const widOf = d => { const r = isoWeek(d); return weekId(r.year, r.week); };
 function jourOuvreSuivant(d, n = 1) { let x = d; while (n > 0) { x = addDays(x, 1); if (dow(x) <= 5 && !ferie(x)) n--; } return x; }
@@ -168,10 +168,12 @@ function nbRepart(id, d) {
     const fen = [[d1, "AM"], [d2, "M"], [d2, "AM"]].map(([x, s]) => ({ x, s, st: effAt(x, m, s) }));
     const abs = fen.find(f => ABSENT.includes(f.st));
     if (abs) { detail[m] = [false, false]; raison[m] = `${abs.st === "CONGRES" ? "congrès" : "absent"} ${JC[dow(abs.x) - 1].toLowerCase()} ${frCourt(abs.x)}`; continue; }
-    const on = [fen[0], fen[1]].map(f => !f.st || !state.regle[f.st]);
+    // Temps partiel : le jour même (J), matin et après-midi. Les absences de J sont ignorées.
+    const on = SLOTS.map(s => { const st = effAt(d, m, s); return !st || ABSENT.includes(st) || !state.regle[st]; });
     detail[m] = on; n += on.filter(Boolean).length * 0.5;
-    if (!on[0] && !on[1]) raison[m] = "temps partiel";
-    else if (!on[0] || !on[1]) raison[m] = `TP ${JC[dow(on[0] ? d2 : d1) - 1].toLowerCase()} ${on[0] ? "mat." : "ap.-m."}`;
+    const j1 = `${JC[dow(d) - 1].toLowerCase()} ${frCourt(d)}`;
+    if (!on[0] && !on[1]) raison[m] = `temps partiel ${j1}`;
+    else if (!on[0] || !on[1]) raison[m] = `temps partiel ${j1} ${on[0] ? "ap.-m." : "mat."}`;
   }
   return { n, detail, raison, d1, d2 };
 }
