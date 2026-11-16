@@ -199,12 +199,14 @@ function computeInternes(lastId) {
       const order = parseWeekId(id).week % 2 ? [...state.internes] : [...state.internes].reverse();
       for (const i of order) {
         if (r[i]) continue;
-        // Pas de minimum de jours : on évite seulement les absences (absent ou congrès).
-        // Priorité au senior sans absence, sinon au moins absent ; on écarte celui absent toute la semaine.
+        // Pas de minimum de jours : on évite seulement les absences de plus d'un jour (absent ou congrès).
+        // On écarte celui absent toute la semaine.
         const c = state.meds.filter(m => !used.has(m)).map(m => { const d = dispoSenior(id, m); return { m, d, abs: d.total - d.n }; })
           .filter(x => x.d.total === 0 || x.d.n > 0);
         if (!c.length) { r[i] = { med: null, src: "none" }; continue; }
-        c.sort((a, b) => (a.abs - b.abs) || ((prev[i] === a.m) - (prev[i] === b.m)) || (total[a.m] - total[b.m]) || (parInt[a.m][i] - parInt[b.m][i]) || (hash(id + a.m) - hash(id + b.m)));
+        // Une seule journée d'absence n'est pas pénalisante ; au-delà, on préfère le moins absent.
+        const pen = x => x.abs <= 1 ? 0 : x.abs;
+        c.sort((a, b) => (pen(a) - pen(b)) || ((prev[i] === a.m) - (prev[i] === b.m)) || (total[a.m] - total[b.m]) || (parInt[a.m][i] - parInt[b.m][i]) || (hash(id + a.m) - hash(id + b.m)));
         r[i] = { med: c[0].m, src: "prop" }; used.add(c[0].m);
       }
     }
@@ -375,31 +377,47 @@ function openFraisDialog(date) {
   dialog(`<h3>Frais médical – ${JOURS[dow(d) - 1]} ${frDate(d)}</h3><select name="med" style="width:100%"><option value="">— Personne</option>${opts}</select>`,
     f => run(store.patch(state.wid, fraisPatch(d, f.med.value)), "Enregistré"));
 }
-function proposerFrais() {
-  if (isFige()) return;
-  const y = String(parseWeekId(state.wid).year);
-  const count = Object.fromEntries(state.meds.map(m => [m, 0]));
-  for (const [id, w] of Object.entries(state.all)) if (id.startsWith(y) && id !== state.wid)
-    for (const d of weekDays(id)) for (const m of state.meds) for (const s of SLOTS) if (eff(w, d, m, s) === "FRAIS") count[m] += 0.5;
-  const ex = new Set(CFG.fraisExclus || []); const ints = internesDe(state.wid);
+// Proposition homogène du frais médical :
+// 1) au plus une fois par semaine et par médecin tant que c'est possible ;
+// 2) puis celui qui en a fait le moins sur les 52 dernières semaines ;
+// 3) puis le moins sur les 4 dernières semaines ; 4) les seniors des internes passent après.
+// Les jours les plus contraints (peu de médecins libres) sont attribués en premier.
+function calculFrais(refaire) {
+  const wid = state.wid; const debut = shiftWeek(wid, -52), recent = shiftWeek(wid, -4);
+  const an = Object.fromEntries(state.meds.map(m => [m, 0])), rec = Object.fromEntries(state.meds.map(m => [m, 0]));
+  for (const [id, w] of Object.entries(state.all)) if (id >= debut && id < wid)
+    for (const d of weekDays(id)) for (const m of state.meds) for (const s of SLOTS) if (eff(w, d, m, s) === "FRAIS") { an[m] += 0.5; if (id >= recent) rec[m] += 0.5; }
+  const ex = new Set(CFG.fraisExclus || []); const ints = internesDe(wid);
   const encad = new Set(state.internes.map(i => ints[i]?.med).filter(Boolean));
   const sem = Object.fromEntries(state.meds.map(m => [m, 0]));
-  const days = weekDays(state.wid).filter(d => !ferie(d));
-  days.forEach(d => fraisHolders(d).forEach(m => sem[m]++));
-  const prop = [], list = [];
-  for (const d of days) {
-    if (fraisHolders(d).length) continue;
-    const c = state.meds.filter(m => !ex.has(m) && libre(d, m));
-    if (!c.length) { prop.push(`${JOURS[dow(d) - 1]} ${frCourt(d)} : personne de disponible`); continue; }
-    c.sort((a, b) => (sem[a] - sem[b]) || (encad.has(a) - encad.has(b)) || (count[a] - count[b]) || (Math.random() - 0.5));
-    const m = c[0]; sem[m]++; count[m]++;
-    prop.push(`${JOURS[dow(d) - 1]} ${frCourt(d)} : <strong>${esc(m)}</strong>`);
+  const days = weekDays(wid).filter(d => !ferie(d));
+  const list = [];
+  if (refaire) { for (const d of days) for (const m of fraisHolders(d)) for (const s of SLOTS) if (eff(W(wid), d, m, s) === "FRAIS") list.push({ d, med: m, slot: s, val: defaultFor(d, m, s) }); }
+  else days.forEach(d => fraisHolders(d).forEach(m => sem[m]++));
+  const libreApres = (d, m) => SLOTS.every(s => { const st = eff(W(wid), d, m, s); return !st || (refaire && st === "FRAIS"); });
+  const aFaire = days.filter(d => refaire || !fraisHolders(d).length)
+    .map(d => ({ d, c: state.meds.filter(m => !ex.has(m) && libreApres(d, m)) }))
+    .sort((x, y) => (x.c.length - y.c.length) || (x.d - y.d));
+  const res = {};
+  for (const { d, c } of aFaire) {
+    if (!c.length) { res[iso(d)] = null; continue; }
+    c.sort((a, b) => (sem[a] - sem[b]) || (an[a] - an[b]) || (rec[a] - rec[b]) || (encad.has(a) - encad.has(b)) || (hash(iso(d) + a) - hash(iso(d) + b)));
+    const m = c[0]; sem[m]++; an[m]++; rec[m]++; res[iso(d)] = m;
     for (const s of SLOTS) list.push({ d, med: m, slot: s, val: "FRAIS" });
   }
-  if (!prop.length) { toast("Tous les jours ont déjà un frais médical"); return; }
+  const lignes = days.filter(d => iso(d) in res).map(d => `${JOURS[dow(d) - 1]} ${frCourt(d)} : ${res[iso(d)] ? `<strong>${esc(res[iso(d)])}</strong>` : "personne de disponible"}`);
+  return { lignes, list };
+}
+function proposerFrais() {
+  if (isFige()) return;
+  const dejaTout = weekDays(state.wid).filter(d => !ferie(d)).every(d => fraisHolders(d).length);
+  const corps = refaire => { const { lignes } = calculFrais(refaire); return lignes.length ? lignes.join("<br>") : "Tous les jours ont déjà un frais médical. Cochez « Refaire toute la semaine » pour tout redistribuer."; };
   dialog(`<h3>Proposition de frais médical</h3>
-    <p class="small muted">Médecins présents toute la journée, en priorité ceux qui en ont fait le moins cette année. Les seniors des internes passent après les autres. Les jours déjà attribués ne changent pas.</p><p>${prop.join("<br>")}</p>`,
-    () => list.length && run(store.patch(state.wid, patchSlots(list)), "Proposition appliquée"), list.length ? "Appliquer" : null);
+    <p class="small muted">Répartition homogène : au plus une fois par semaine et par médecin (si possible), puis ceux qui en ont fait le moins sur les 12 derniers mois. Uniquement des médecins présents toute la journée ; les seniors des internes passent après les autres.</p>
+    <label class="chk"><input type="checkbox" name="refaire" ${dejaTout ? "checked" : ""}> Refaire toute la semaine (remplace les attributions existantes)</label>
+    <p id="fraisProp">${corps(dejaTout)}</p>`,
+    f => { const { list } = calculFrais(f.refaire.checked); if (list.length) run(store.patch(state.wid, patchSlots(list)), "Frais médical réparti"); }, "Appliquer");
+  const f = $("#dlgForm"); f.refaire.onchange = () => { $("#fraisProp").innerHTML = corps(f.refaire.checked); };
 }
 
 function openNbDialog(td) {
@@ -441,7 +459,7 @@ function renderInternes() {
       const tag = { val: `<span class="tag val">validé</span>`, man: `<span class="tag man">choisi</span>`, prop: `<span class="tag prop">proposé</span>`, none: "" }[a.src];
       let alert = "";
       if (a.src === "none" && id >= today) alert = `<span class="alert">Aucun senior disponible : choisissez à la main</span>`;
-      else if (a.med) { const d = dispoSenior(id, a.med); if (d.n < d.total) alert = `<span class="alert">⚠ ${esc(a.med)} est absent(e) ${fmtNb(d.total - d.n)} j cette semaine</span>`; }
+      else if (a.med) { const d = dispoSenior(id, a.med); if (d.total - d.n > 1) alert = `<span class="alert">⚠ ${esc(a.med)} est absent(e) ${fmtNb(d.total - d.n)} j cette semaine</span>`; }
       h += `<td class="senior" data-l="${esc(i)}"><span><select data-id="${id}" data-int="${esc(i)}" ${f ? "disabled" : ""}>${opts}</select>${tag}</span>${alert}</td>`;
     }
     h += `<td class="noprint" data-l="">${f ? `<span class="muted small">semaine figée</span>` : w.internes?.valide
