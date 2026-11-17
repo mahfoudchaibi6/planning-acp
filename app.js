@@ -90,6 +90,19 @@ async function makeFirestoreStore(code) {
       }
       if (params.exists()) await fs.setDoc(fs.doc(db, "espaces", newCode, "config", "params"), params.data());
       return docs.length;
+    },
+    // Restaure une sauvegarde : chaque semaine du fichier remplace la semaine actuelle.
+    async restore(semaines, params) {
+      let n = 0;
+      for (const [id, data] of Object.entries(semaines)) {
+        if (!/^\d{4}-W\d{2}$/.test(id)) continue;
+        const ref = fs.doc(col, id); const cur = await fs.getDoc(ref);
+        if (cur.exists() && cur.data().fige) await fs.setDoc(ref, { fige: false, maj: fs.serverTimestamp() }, { merge: true });
+        const { maj, ...rest } = data;
+        await fs.setDoc(ref, { ...rest, maj: fs.serverTimestamp() }); n++;
+      }
+      if (params && Object.keys(params).length) await fs.setDoc(pref, params);
+      return n;
     }
   };
 }
@@ -105,7 +118,12 @@ function makeDemoStore() {
     async patch(id, p) { const d = load(); merge((d.semaines[id] ??= {}), p); save(d); listener && listener(structuredClone(d.semaines)); },
     async getParams() { return load().params || {}; },
     async setParams(p) { const d = load(); d.params = p; save(d); },
-    async copyTo() { return Object.keys(load().semaines).length; }
+    async copyTo() { return Object.keys(load().semaines).length; },
+    async restore(semaines, params) {
+      const d = load(); for (const [id, w] of Object.entries(semaines)) { const { maj, ...rest } = w; d.semaines[id] = rest; }
+      if (params && Object.keys(params).length) d.params = params; save(d); listener && listener(structuredClone(d.semaines));
+      return Object.keys(semaines).length;
+    }
   };
 }
 
@@ -130,6 +148,34 @@ function showErr(e) {
   b.classList.remove("hidden"); setTimeout(() => b.classList.add("hidden"), 6000);
 }
 const run = async (p, ok) => { try { await p; if (ok) toast(ok); } catch (e) { showErr(e); } };
+
+// ------------------------------------------------------------------ sauvegardes
+const sansMaj = all => Object.fromEntries(Object.entries(all).map(([id, w]) => { const { maj, ...rest } = w || {}; return [id, rest]; }));
+function contenuSauvegarde() {
+  return { application: "Planning ACP – CH Valenciennes", date: new Date().toISOString(),
+    params: { medecins: state.meds, internes: state.internes, regle: state.regle }, semaines: sansMaj(state.all) };
+}
+function telecharger(obj, nom) {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 1)], { type: "application/json" }));
+  const a = document.createElement("a"); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+const nomFichier = d => `planning-acp-sauvegarde-${d.slice(0, 10)}.json`;
+// Copie automatique sur l'appareil (une par jour, on garde les 7 dernières)
+const KB = "planningACP_copies";
+function lireCopies() { try { return JSON.parse(localStorage.getItem(KB)) || []; } catch { return []; } }
+function copieAuto() {
+  if (!Object.keys(state.all).length) return;
+  const jour = new Date().toISOString().slice(0, 10); const copies = lireCopies().filter(c => c.date.slice(0, 10) !== jour);
+  copies.unshift(contenuSauvegarde());
+  try { localStorage.setItem(KB, JSON.stringify(copies.slice(0, 7))); } catch {}
+}
+function renderSauvegardes() {
+  const c = lireCopies();
+  $("#copiesWrap").innerHTML = c.length
+    ? `<p class="small muted" style="margin:0 0 6px">Copies automatiques gardées sur cet appareil :</p>` + c.map((x, k) => `<div class="bar" style="margin:4px 0"><span class="chip">${new Date(x.date).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}</span><span class="small muted">${Object.keys(x.semaines).length} semaine(s)</span><button data-copie="${k}">Télécharger</button></div>`).join("")
+    : `<p class="small muted" style="margin:0">Pas encore de copie automatique sur cet appareil.</p>`;
+}
 
 // ------------------------------------------------------------------ valeurs effectives
 function defaultFor(d, med, slot) {
@@ -516,6 +562,7 @@ function renderBilan() {
 
 // ------------------------------------------------------------------ paramètres
 function renderParams() {
+  renderSauvegardes();
   $("#pMeds").value = state.meds.join(", "); $("#pInternes").value = state.internes.join(", ");
   $("#regleWrap").innerHTML = STATUTS.map(s => `<label class="chk"><input type="checkbox" data-st="${s.id}" ${state.regle[s.id] ? "checked" : ""}> ${s.label}</label>`).join("");
   const r = CFG.rcpRoulement || [];
@@ -619,6 +666,17 @@ function bind() {
       else showErr(e);
     }
   };
+  $("#btnBackup").onclick = () => { const c = contenuSauvegarde(); telecharger(c, nomFichier(c.date)); toast("Sauvegarde téléchargée"); };
+  $("#copiesWrap").onclick = e => { const b = e.target.closest("[data-copie]"); if (b) { const c = lireCopies()[+b.dataset.copie]; telecharger(c, nomFichier(c.date)); } };
+  $("#restoreFile").onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    let data; try { data = JSON.parse(await f.text()); } catch { toast("Fichier illisible"); return; }
+    if (!data || typeof data.semaines !== "object") { toast("Ce fichier n'est pas une sauvegarde du planning"); return; }
+    const n = Object.keys(data.semaines).length;
+    if (!confirm(`Restaurer la sauvegarde du ${new Date(data.date).toLocaleString("fr-FR")} (${n} semaine(s)) ?\n\nLes semaines présentes dans le fichier remplaceront les semaines actuelles. Conseil : téléchargez d'abord une sauvegarde de l'état actuel.`)) return;
+    try { const k = await store.restore(data.semaines, data.params); cacheInt = null; toast(`${k} semaine(s) restaurée(s)`); setTimeout(() => location.reload(), 1200); }
+    catch (err) { showErr(err); }
+  };
   $("#btnLogout").onclick = () => { try { localStorage.removeItem("planningACP_code"); sessionStorage.removeItem("planningACP_code"); } catch {} location.reload(); };
   $("#codeBtn").onclick = tryCode;
   $("#codeInput").onkeydown = e => { if (e.key === "Enter") tryCode(); };
@@ -637,7 +695,8 @@ async function start(code) {
   $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
   $("#demoBanner").classList.toggle("hidden", !DEMO);
   const h = location.hash.match(/^#(\d{4}-W\d{2})$/); if (h) state.wid = h[1];
-  store.subscribe(all => { state.all = all || {}; render(); }, showErr);
+  let premiere = true;
+  store.subscribe(all => { state.all = all || {}; render(); if (premiere) { premiere = false; copieAuto(); } }, showErr);
 }
 async function tryCode() {
   const code = $("#codeInput").value.trim(); const err = $("#codeErr"); err.classList.add("hidden");

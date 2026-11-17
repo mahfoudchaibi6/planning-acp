@@ -188,6 +188,8 @@ td.nb .man{display:block;font-size:10.5px;font-weight:600;color:var(--warn);marg
 .dcard.ferie .fl{color:var(--muted);font-weight:600;font-size:13px}
 .split{display:grid;grid-template-columns:1fr;gap:8px}
 .weekbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+label.btn-file span{display:inline-block;cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font-weight:500}
+label.btn-file span:hover{border-color:#b9cdd6;background:var(--surface-2)}
 button.btn-abs{background:var(--ABS-bg);color:var(--ABS-fg);border-color:#f3b8b2;font-weight:600}
 button.btn-abs:hover{background:#fbd3cf;border-color:#ec9c94}
 select[data-v="ABS"]{background:var(--ABS-bg);color:var(--ABS-fg);border-color:#f3b8b2}
@@ -497,10 +499,19 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
           <button class="primary" id="btnCopyCode">Recopier le planning</button></div>
       </div>
       <div class="card">
+        <h3>💾 Sauvegarde des données</h3>
+        <p class="lead">Téléchargez régulièrement une sauvegarde (par exemple chaque mois) et gardez-la sur votre ordinateur. En cas d'erreur, elle permet de tout remettre comme avant.</p>
+        <div class="actions" style="margin-bottom:12px">
+          <button class="primary" id="btnBackup">Télécharger une sauvegarde</button>
+          <label class="btn-file"><input type="file" id="restoreFile" accept=".json,application/json" hidden><span>Restaurer une sauvegarde…</span></label>
+        </div>
+        <div id="copiesWrap"></div>
+      </div>
+      <div class="card">
         <h3>Cet appareil</h3>
         <p class="lead">Pour un ordinateur partagé, effacez le code après usage.</p>
         <button id="btnLogout">Oublier le code sur cet appareil</button>
-        <p class="small muted" style="margin:12px 0 0">Version du planning : 2026-11-17g</p>
+        <p class="small muted" style="margin:12px 0 0">Version du planning : 2026-11-17h</p>
       </div>
     </section>
   </main>
@@ -509,7 +520,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
 <dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
 <div id="toast"></div>
 
-<script src="config.js?v=2026-11-17g"></script>
-<script type="module" src="app.js?v=2026-11-17g"></script>
+<script src="config.js?v=2026-11-17h"></script>
+<script type="module" src="app.js?v=2026-11-17h"></script>
 </body>
 </html>
