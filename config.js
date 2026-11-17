@@ -34,11 +34,12 @@ window.PLANNING_CONFIG = {
 
   // --- Temps partiels fixes, préremplis chaque semaine -----------------
   // jour : 1 = lundi … 5 = vendredi ; creneau : "J" (journée), "M" (matin), "AM" (après-midi)
-  // (MPE et PV ont un jour variable : elles le saisissent chaque semaine.)
+  // (MPE a un jour variable : elle le saisit chaque semaine.)
   tempsPartiels: [
     { medecin: "KL", jour: 3, creneau: "J" },
     { medecin: "DD", jour: 3, creneau: "J" },
-    { medecin: "SB", jour: 5, creneau: "J" }
+    { medecin: "SB", jour: 5, creneau: "J" },
+    { medecin: "PV", jour: 4, creneau: "AM" }   // jeudi après-midi
   ],
 
   // --- Règle « Nb répart. » (valeurs de départ) --------------------------
