@@ -153,8 +153,8 @@ const dermaPresente = (id, d) => DERMA && DERMA.jours.includes(dow(d)) && SLOTS.
 // ------------------------------------------------------------------ répartition des cas
 // Les cas répartis le soir du jour J sont lisibles le jour ouvré suivant (J+1) à partir de 14h.
 // Fenêtre de lecture = après-midi de J+1 + journée de J+2 (jours ouvrés, hors week-end et fériés).
-// - Absence longue (≥ 2 jours ouvrés) à un moment de la fenêtre → ne reçoit rien ce soir-là.
-// - Absence courte (1 jour) : comme un temps partiel, seulement le jour même.
+// - Vacances (≥ 3 jours ouvrés) à un moment de la fenêtre → ne reçoit rien ce soir-là.
+// - Absence courte (1 ou 2 jours) : comme un temps partiel, seulement les jours d'absence.
 // - Temps partiel (ou autre statut coché dans la règle) : compte le jour même (J) :
 //   journée entière → pas de répartition ce jour-là, demi-journée → ½.
 // La présence le jour J lui-même ne compte pas.
@@ -162,13 +162,17 @@ const widOf = d => { const r = isoWeek(d); return weekId(r.year, r.week); };
 function jourOuvreSuivant(d, n = 1) { let x = d; while (n > 0) { x = addDays(x, 1); if (dow(x) <= 5 && !ferie(x)) n--; } return x; }
 const effAt = (d, m, s) => eff(W(widOf(d)), d, m, s);
 function fenetreLecture(d) { const d1 = jourOuvreSuivant(d, 1), d2 = jourOuvreSuivant(d, 2); return { d1, d2 }; }
-// Absence « longue » = au moins 2 jours ouvrés d'affilée avec une absence (ou congrès).
-// Absence « courte » (1 seul jour, ou une demi-journée) = traitée comme un temps partiel.
+// Absence « longue » (vacances) = au moins 3 jours ouvrés d'affilée avec une absence (ou congrès).
+// Absence « courte » (1 ou 2 jours) = traitée comme un temps partiel : pas de répartition les jours d'absence.
 function jourOuvrePrecedent(d) { let x = d; do { x = addDays(x, -1); } while (dow(x) > 5 || ferie(x)); return x; }
 const jourAbsent = (x, m) => SLOTS.some(s => ABSENT.includes(effAt(x, m, s)));
+const JOURS_VACANCES = CFG.joursVacances || 3; // absence d'au moins N jours ouvrés d'affilée = vacances
 function absenceLongue(x, m) {
   if (!jourAbsent(x, m)) return false;
-  return jourAbsent(jourOuvrePrecedent(x), m) || jourAbsent(jourOuvreSuivant(x, 1), m);
+  let n = 1, a = x, b = x;
+  while (n < JOURS_VACANCES && jourAbsent((a = jourOuvrePrecedent(a)), m)) n++;
+  while (n < JOURS_VACANCES && jourAbsent((b = jourOuvreSuivant(b, 1)), m)) n++;
+  return n >= JOURS_VACANCES;
 }
 function nbRepart(id, d) {
   const { d1, d2 } = fenetreLecture(d);
@@ -183,7 +187,7 @@ function nbRepart(id, d) {
       for (let k = 0; k < 40 && jourAbsent(jourOuvreSuivant(fin, 1), m); k++) fin = jourOuvreSuivant(fin, 1);
       detail[m] = [false, false]; raison[m] = `${abs.st === "CONGRES" ? "congrès" : "absent"} du ${frCourt(deb)} au ${frCourt(fin)}`; continue;
     }
-    // Le jour même : temps partiel, ou absence courte (1 jour ou ½ journée) → pas de répartition (½ si demi-journée).
+    // Le jour même : temps partiel, ou absence courte (1 ou 2 jours) → pas de répartition (½ si demi-journée).
     // Une absence longue le jour même ne compte pas (seule la période de lecture compte, voir plus haut).
     const courte = !absenceLongue(d, m);
     const on = SLOTS.map(s => { const st = effAt(d, m, s); if (!st) return true; if (ABSENT.includes(st)) return !courte; return !state.regle[st]; });

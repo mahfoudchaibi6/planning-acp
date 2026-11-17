@@ -66,6 +66,10 @@ window.PLANNING_CONFIG = {
   // Médecins à ne jamais proposer automatiquement pour le frais médical.
   fraisExclus: [],
 
+  // Absence considérée comme des vacances à partir de ce nombre de jours ouvrés d'affilée :
+  // on arrête alors la répartition 2 jours avant le départ. En dessous : comme un temps partiel.
+  joursVacances: 3,
+
   lundiPentecoteFerie: true,
   semainesInternesAffichees: 8
 };
