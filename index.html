@@ -404,7 +404,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
       </div>
       <div class="card noprint">
         <h3>À qui répartir</h3>
-        <p class="lead"><strong>Temps partiel ou absence de 1 ou 2 jours</strong> : pas de répartition le jour même (½ si demi-journée). <strong>Vacances (absence de 3 jours ou plus)</strong> : les cas du soir étant lus le lendemain dès 14h, on arrête 2 jours avant le départ et on reprend le soir du dernier jour d'absence. RCP, formation, administratif, télétravail et frais médical ne changent rien.</p>
+        <p class="lead"><strong>Temps partiel, absence d'1 jour, formation ou administratif</strong> : pas de répartition sur ce créneau le jour même (½ par demi-journée). <strong>Absence de 2 jours</strong> : pas de répartition la veille ni le 1er jour, répartition le dernier jour. <strong>Vacances (3 jours ou plus)</strong> : pas de répartition les 2 jours avant le départ ni pendant, répartition le dernier jour. RCP, télétravail et frais médical ne changent rien.</p>
         <div id="repartWrap"></div>
       </div>
       <div class="card noprint">
@@ -478,7 +478,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
       </div>
       <div class="card">
         <h3>Règle du nombre de répartition</h3>
-        <p class="lead">Les cas du soir sont lus le lendemain après-midi et le surlendemain. Une absence ou un congrès sur cette période retire toujours le médecin. Cochez en plus les situations qui retirent le médecin de la répartition le jour même (½ par demi-journée). Réglage partagé par tout le service.</p>
+        <p class="lead">Les absences suivent leurs propres règles (1 jour, 2 jours, vacances). Cochez les situations qui retirent le médecin de la répartition le jour même (½ par demi-journée). Réglage partagé par tout le service.</p>
         <div id="regleWrap" class="regle"></div>
       </div>
       <div class="actions" style="margin-bottom:16px"><button class="primary" id="btnParams">Enregistrer les paramètres</button></div>
@@ -511,7 +511,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
         <h3>Cet appareil</h3>
         <p class="lead">Pour un ordinateur partagé, effacez le code après usage.</p>
         <button id="btnLogout">Oublier le code sur cet appareil</button>
-        <p class="small muted" style="margin:12px 0 0">Version du planning : 2026-11-17h</p>
+        <p class="small muted" style="margin:12px 0 0">Version du planning : 2026-11-18a</p>
       </div>
     </section>
   </main>
@@ -520,7 +520,7 @@ dialog .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex
 <dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
 <div id="toast"></div>
 
-<script src="config.js?v=2026-11-17h"></script>
-<script type="module" src="app.js?v=2026-11-17h"></script>
+<script src="config.js?v=2026-11-18a"></script>
+<script type="module" src="app.js?v=2026-11-18a"></script>
 </body>
 </html>
