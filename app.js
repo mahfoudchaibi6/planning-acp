@@ -460,6 +460,7 @@ function openFraisDialog(date) {
 // 2) puis celui qui en a fait le moins sur les 52 dernières semaines ;
 // 3) puis le moins sur les 4 dernières semaines ; 4) les seniors des internes passent après.
 // Les jours les plus contraints (peu de médecins libres) sont attribués en premier.
+const fraisInterdit = (m, d) => (CFG.fraisJoursInterdits || []).some(r => r.medecin === m && r.jour === dow(d));
 function calculFrais(refaire) {
   const wid = state.wid; const debut = shiftWeek(wid, -52), recent = shiftWeek(wid, -4);
   const an = Object.fromEntries(state.meds.map(m => [m, 0])), rec = Object.fromEntries(state.meds.map(m => [m, 0]));
@@ -474,7 +475,7 @@ function calculFrais(refaire) {
   else days.forEach(d => fraisHolders(d).forEach(m => sem[m]++));
   const libreApres = (d, m) => SLOTS.every(s => { const st = eff(W(wid), d, m, s); return !st || (refaire && st === "FRAIS"); });
   const aFaire = days.filter(d => refaire || !fraisHolders(d).length)
-    .map(d => ({ d, c: state.meds.filter(m => !ex.has(m) && libreApres(d, m)) }))
+    .map(d => ({ d, c: state.meds.filter(m => !ex.has(m) && !fraisInterdit(m, d) && libreApres(d, m)) }))
     .sort((x, y) => (x.c.length - y.c.length) || (x.d - y.d));
   const res = {};
   for (const { d, c } of aFaire) {

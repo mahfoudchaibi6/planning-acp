@@ -65,6 +65,11 @@ window.PLANNING_CONFIG = {
   // --- Frais médical ----------------------------------------------------
   // Médecins à ne jamais proposer automatiquement pour le frais médical.
   fraisExclus: [],
+  // Jours où un médecin ne doit jamais être proposé pour le frais médical
+  // (jour : 1 = lundi … 5 = vendredi). On peut toujours l'attribuer à la main.
+  fraisJoursInterdits: [
+    { medecin: "SB", jour: 4 }   // SB jamais le jeudi
+  ],
 
   // Absence considérée comme des vacances à partir de ce nombre de jours ouvrés d'affilée :
   // on arrête alors la répartition 2 jours avant le départ. En dessous : comme un temps partiel.
