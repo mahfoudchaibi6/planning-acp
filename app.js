@@ -213,18 +213,24 @@ function fenetreLecture(d) { const d1 = jourOuvreSuivant(d, 1), d2 = jourOuvreSu
 function jourOuvrePrecedent(d) { let x = d; do { x = addDays(x, -1); } while (dow(x) > 5 || ferie(x)); return x; }
 const jourAbsent = (x, m) => SLOTS.some(s => ABSENT.includes(effAt(x, m, s)));
 const JOURS_VACANCES = CFG.joursVacances || 3; // absence d'au moins N jours ouvrés d'affilée = vacances
-// Longueur (en jours ouvrés, plafonnée) du bloc d'absence qui contient le jour x ; 0 si présent.
+// Une absence se prolonge seulement sur des jours qui se suivent dans la semaine :
+// un week-end ou un jour férié coupe le bloc (vendredi absent + lundi absent = 2 absences séparées).
+function voisinAbsent(x, m, sens) {
+  const y = addDays(x, sens);
+  return dow(y) <= 5 && !ferie(y) && jourAbsent(y, m) ? y : null;
+}
+// Longueur (en jours, plafonnée) du bloc d'absence qui contient le jour x ; 0 si présent.
 function blocAbsence(x, m) {
   if (!jourAbsent(x, m)) return 0;
   let n = 1, a = x, b = x;
-  while (n < JOURS_VACANCES && jourAbsent((a = jourOuvrePrecedent(a)), m)) n++;
-  while (n < JOURS_VACANCES && jourAbsent((b = jourOuvreSuivant(b, 1)), m)) n++;
+  while (n < JOURS_VACANCES && (a = voisinAbsent(a, m, -1))) n++;
+  while (n < JOURS_VACANCES && (b = voisinAbsent(b, m, 1))) n++;
   return n;
 }
 function bornesAbsence(x, m) {
-  let deb = x, fin = x;
-  for (let k = 0; k < 60 && jourAbsent(jourOuvrePrecedent(deb), m); k++) deb = jourOuvrePrecedent(deb);
-  for (let k = 0; k < 60 && jourAbsent(jourOuvreSuivant(fin, 1), m); k++) fin = jourOuvreSuivant(fin, 1);
+  let deb = x, fin = x, y;
+  for (let k = 0; k < 10 && (y = voisinAbsent(deb, m, -1)); k++) deb = y;
+  for (let k = 0; k < 10 && (y = voisinAbsent(fin, m, 1)); k++) fin = y;
   return { deb, fin };
 }
 function nbRepart(id, d) {
